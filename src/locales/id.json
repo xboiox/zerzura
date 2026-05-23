@@ -1,0 +1,78 @@
+{
+  "RootLayout": {
+    "home_link": "Beranda",
+    "about_link": "Tentang",
+    "counter_link": "Penghitung",
+    "portfolio_link": "Portofolio",
+    "sign_in_link": "Masuk",
+    "sign_up_link": "Daftar"
+  },
+  "BaseTemplate": {
+    "description": "Kode awal untuk Next.js Boilerplate dengan Tailwind CSS",
+    "footer_text": "© {year} {name}. Dibuat dengan <author></author>.",
+    "main_navigation_label": "Navigasi utama"
+  },
+  "Index": {
+    "meta_title": "Presentasi Next.js Boilerplate",
+    "meta_description": "Next.js Boilerplate adalah kode awal yang sempurna untuk proyek Anda. Bangun aplikasi React dengan framework Next.js.",
+    "sponsors_title": "Sponsor",
+    "zap_emoji_label": "Kilat"
+  },
+  "Counter": {
+    "meta_title": "Penghitung",
+    "meta_description": "Contoh operasi database",
+    "security_powered_by": "Keamanan, deteksi bot, dan pembatasan laju didukung oleh"
+  },
+  "CounterForm": {
+    "presentation": "Penghitung disimpan di database dan ditambah dengan nilai yang Anda masukkan.",
+    "label_increment": "Tambah sebesar",
+    "button_increment": "Tambah",
+    "error_increment_range": "Nilai harus antara 1 dan 3"
+  },
+  "CurrentCount": {
+    "count": "Jumlah: {count}"
+  },
+  "About": {
+    "meta_title": "Tentang",
+    "meta_description": "Deskripsi halaman tentang",
+    "about_paragraph": "Selamat datang di halaman Tentang kami! Kami adalah tim individu yang bersemangat dan berdedikasi dalam menciptakan perangkat lunak yang luar biasa.",
+    "translation_powered_by": "Terjemahan didukung oleh"
+  },
+  "Portfolio": {
+    "meta_title": "Portofolio",
+    "meta_description": "Selamat datang di halaman portofolio saya!",
+    "presentation": "Selamat datang di halaman portofolio saya! Di sini Anda akan menemukan kumpulan karya dan pencapaian saya yang telah dikurasi dengan cermat.",
+    "portfolio_name": "Portofolio {name}",
+    "error_reporting_powered_by": "Pelaporan error didukung oleh"
+  },
+  "PortfolioSlug": {
+    "meta_title": "Portofolio {slug}",
+    "meta_description": "Deskripsi Portofolio {slug}",
+    "header": "Portofolio {slug}",
+    "content": "Membuat serangkaian materi promosi dan elemen branding untuk acara perusahaan. Merancang tema yang terpadu secara visual, mencakup logo, poster, spanduk, dan aset digital.",
+    "code_review_powered_by": "Tinjauan kode didukung oleh"
+  },
+  "SignIn": {
+    "meta_title": "Masuk",
+    "meta_description": "Masuk ke akun Anda dengan mudah."
+  },
+  "SignUp": {
+    "meta_title": "Daftar",
+    "meta_description": "Buat akun dengan mudah melalui proses pendaftaran yang intuitif."
+  },
+  "Dashboard": {
+    "hello_message": "Halo {email}!",
+    "alternative_message": "Butuh fitur lebih lengkap? Multi-tenancy & Tim, Peran & Izin, Shadcn UI, keamanan end-to-end dengan oRPC, Pembayaran Stripe, Mode terang / gelap. Coba <url></url>.",
+    "max_message": "Atau, butuh stack auth self-hosted (Better Auth)? Coba <url></url>."
+  },
+  "DashboardLayout": {
+    "meta_title": "Dashboard",
+    "meta_description": "Kelola akun Anda dari dashboard.",
+    "dashboard_link": "Dashboard",
+    "user_profile_link": "Kelola akun Anda",
+    "sign_out": "Keluar"
+  },
+  "LocaleSwitcher": {
+    "change_language": "Ganti bahasa"
+  }
+}
