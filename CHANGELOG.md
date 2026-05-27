@@ -6,6 +6,51 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Admin Panel Improvements
+
+**Application Status Expansion (4 → 8 statuses):**
+- `src/models/Schema.ts`: expand `applicationStatusEnum` ke 8 nilai: PENDING, REVIEWED, INTERVIEWED, ASSESSMENT, OFFERING, ACCEPTED, REJECTED, WITHDRAWN
+- `src/components/admin/StatusUpdateForm.tsx`: dropdown update status diperluas ke 8 opsi
+- `src/actions/applicationActions.ts`: label email Indonesian untuk semua 8 status
+- Badge warna baru: biru untuk INTERVIEWED/ASSESSMENT/OFFERING, kuning untuk REVIEWED, merah untuk REJECTED/WITHDRAWN/ACCEPTED (hijau)
+- Dashboard pelamar: filter bar + badge status diperluas ke 8 status
+- Migration `0007_*`: `ALTER TYPE application_status ADD VALUE` untuk INTERVIEWED, ASSESSMENT, OFFERING, WITHDRAWN
+
+**Admin Dashboard — Statistik Baru:**
+- `src/app/[locale]/(auth)/admin/page.tsx`: tambah stat card "Expiring Soon" (konstanta `EXPIRING_SOON_DAYS = 14`)
+- Section baru "New Applicants" dengan 4 stat cards clickable: Unreviewed (PENDING), Reviewed, Ongoing (INTERVIEWED+ASSESSMENT+OFFERING), Closed (ACCEPTED+REJECTED+WITHDRAWN)
+- Stat cards New Applicants link ke `/admin/applicants?status=...`
+
+**Manage Jobs — Kolom Pelamar:**
+- `src/app/[locale]/(auth)/admin/jobs/page.tsx`: tambah kolom "Pelamar" dengan angka clickable → link ke halaman pelamar per lowongan
+
+**Global Applicants Page (BARU):**
+- `src/app/[locale]/(auth)/admin/applicants/page.tsx`: halaman baru — semua pelamar lintas lowongan dengan filter status (All / Unreviewed / Reviewed / Ongoing / Closed)
+- Filter via URL search param `?status=` — pills linkable dan shareable
+- Tabel: nama pelamar (→ profil per-job), judul lowongan (→ halaman pelamar per job), status badge, tanggal, download CV
+- `AdminNav`: tambah link "Semua Pelamar" (`/admin/applicants`) — visible untuk semua admin (ADMIN + SUPER_ADMIN)
+
+**Manage Users — Extended:**
+- `src/app/[locale]/(auth)/admin/users/page.tsx`: tambah section "Semua Pengguna Terdaftar" — tabel nama (link → profil), email, jumlah lamaran
+- `AdminNav`: link "Kelola Admin" sekarang tampil untuk semua admin (bukan hanya SUPER_ADMIN)
+- `src/app/[locale]/(auth)/admin/layout.tsx`: pass `isAdmin` (ADMIN || SUPER_ADMIN) ke `AdminNav`
+
+**User Profile Page for Admin (BARU):**
+- `src/app/[locale]/(auth)/admin/users/[clerkId]/page.tsx`: halaman profil pengguna — nama, email, informasi pribadi (telepon, kota, skills), riwayat semua lamaran dengan status badge + download CV
+- Back link ke `/admin/users`
+
+**i18n:**
+- Namespace baru: `AdminAllApplicantsPage` (filter pills, header kolom, empty state)
+- Namespace baru: `AdminUserProfilePage` (judul section, label field, header kolom)
+- Tambahan `AdminDashboard`: `expiring_jobs`, `new_applicants_title`, `unreviewed_label`, `reviewed_label`, `ongoing_label`, `closed_label`
+- Tambahan `AdminJobsPage`: `table_applicants`
+- Tambahan `AdminApplicantsPage`: `status_interviewed`, `status_assessment`, `status_offering`, `status_withdrawn`
+- Tambahan `AdminUsersPage`: `all_users_title`, `col_applications`, `no_users`
+- Tambahan `DashboardPage`: 4 keys status baru (interviewed, assessment, offering, withdrawn)
+- Tambahan `AdminLayout`: `nav_applicants`
+
+---
+
 ### Content & Branding Polish
 
 **Warna & Font:**

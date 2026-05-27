@@ -15,8 +15,12 @@ export const jobStatusEnum = pgEnum('job_status', ['DRAFT', 'PUBLISHED', 'INACTI
 export const applicationStatusEnum = pgEnum('application_status', [
   'PENDING',
   'REVIEWED',
+  'INTERVIEWED',
+  'ASSESSMENT',
+  'OFFERING',
   'ACCEPTED',
   'REJECTED',
+  'WITHDRAWN',
 ]);
 
 export const userProfileTable = pgTable('user_profile', {

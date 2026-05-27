@@ -159,6 +159,21 @@ Urutan berdasarkan dependency. Setiap fase harus selesai sebelum fase berikutnya
 
 ---
 
+## Phase 4c: Admin Panel Improvements ✅
+*Diluar scope plan asli — dikerjakan setelah Phase 4b.*
+
+- [x] **Application status expansion:** expand enum dari 4 → 8 nilai (PENDING, REVIEWED, INTERVIEWED, ASSESSMENT, OFFERING, ACCEPTED, REJECTED, WITHDRAWN)
+  - Migration `0007_*` di-generate dan di-apply
+  - `StatusUpdateForm`, `applicationActions.ts`, halaman pelamar, dashboard pelamar semua diperluas ke 8 status
+- [x] **Admin dashboard — statistik baru:** stat card "Expiring Soon" (`EXPIRING_SOON_DAYS = 14`) + section New Applicants dengan 4 stat cards clickable (Unreviewed/Reviewed/Ongoing/Closed)
+- [x] **Manage Jobs — kolom pelamar:** kolom "Pelamar" dengan angka clickable → halaman pelamar per lowongan
+- [x] **Halaman global pelamar:** `/admin/applicants` — semua pelamar lintas lowongan, filter status via URL param, tabel dengan link ke profil
+- [x] **Admin nav:** tambah link "Semua Pelamar" untuk semua admin
+- [x] **Manage Users extended:** section "Semua Pengguna Terdaftar" di `/admin/users` — nama (clickable), email, jumlah lamaran; link Users nav visible untuk semua admin
+- [x] **Halaman profil pengguna:** `/admin/users/[clerkId]` — data pribadi (telepon, kota, skills) + riwayat lamaran
+
+---
+
 ## Phase 10: Security & Rate Limiting
 *Setelah semua fitur core selesai.*
 

@@ -8,26 +8,46 @@ import { db } from '@/libs/DB';
 import { Link } from '@/libs/I18nNavigation';
 import { applicationStatusLogTable, applicationTable, jobTable } from '@/models/Schema';
 
-type ApplicationStatus = 'PENDING' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
+type ApplicationStatus =
+  | 'PENDING'
+  | 'REVIEWED'
+  | 'INTERVIEWED'
+  | 'ASSESSMENT'
+  | 'OFFERING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
 type StatusFilter = ApplicationStatus | undefined;
 
 const PAGE_SIZE = 10;
 
-function statusBadgeClass(status: ApplicationStatus): string {
+function statusBadgeClass(status: string): string {
   if (status === 'ACCEPTED') {
     return 'bg-green-100 text-green-700';
   }
-  if (status === 'REJECTED') {
+  if (status === 'REJECTED' || status === 'WITHDRAWN') {
     return 'bg-red-100 text-red-700';
   }
+  if (status === 'OFFERING' || status === 'INTERVIEWED' || status === 'ASSESSMENT') {
+    return 'bg-blue-100 text-blue-700';
+  }
   if (status === 'REVIEWED') {
-    return 'bg-red-100 text-red-700';
+    return 'bg-yellow-100 text-yellow-700';
   }
   return 'bg-gray-100 text-gray-600';
 }
 
 function isValidStatus(val: unknown): val is ApplicationStatus {
-  return val === 'PENDING' || val === 'REVIEWED' || val === 'ACCEPTED' || val === 'REJECTED';
+  return (
+    val === 'PENDING' ||
+    val === 'REVIEWED' ||
+    val === 'INTERVIEWED' ||
+    val === 'ASSESSMENT' ||
+    val === 'OFFERING' ||
+    val === 'ACCEPTED' ||
+    val === 'REJECTED' ||
+    val === 'WITHDRAWN'
+  );
 }
 
 type DashboardPageProps = {
@@ -120,11 +140,15 @@ export default async function DashboardPage(props: DashboardPageProps) {
     },
   ];
 
-  const statusLabel: Record<ApplicationStatus, string> = {
+  const statusLabel: Record<string, string> = {
     PENDING: t('status_pending'),
     REVIEWED: t('status_reviewed'),
+    INTERVIEWED: t('status_interviewed'),
+    ASSESSMENT: t('status_assessment'),
+    OFFERING: t('status_offering'),
     ACCEPTED: t('status_accepted'),
     REJECTED: t('status_rejected'),
+    WITHDRAWN: t('status_withdrawn'),
   };
 
   function pageHref(page: number) {
@@ -169,12 +193,18 @@ export default async function DashboardPage(props: DashboardPageProps) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-900">
           {activeFilter
-            ? {
-                PENDING: t('filter_label_pending'),
-                REVIEWED: t('filter_label_reviewed'),
-                ACCEPTED: t('filter_label_accepted'),
-                REJECTED: t('filter_label_rejected'),
-              }[activeFilter]
+            ? (
+                {
+                  PENDING: t('filter_label_pending'),
+                  REVIEWED: t('filter_label_reviewed'),
+                  INTERVIEWED: t('filter_label_reviewed'),
+                  ASSESSMENT: t('filter_label_reviewed'),
+                  OFFERING: t('filter_label_reviewed'),
+                  ACCEPTED: t('filter_label_accepted'),
+                  REJECTED: t('filter_label_rejected'),
+                  WITHDRAWN: t('filter_label_rejected'),
+                } as Record<ApplicationStatus, string>
+              )[activeFilter]
             : t('applications_title')}
         </h2>
         <div className="flex items-center gap-4">
@@ -236,9 +266,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(app.status as ApplicationStatus)}`}
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(app.status)}`}
                           >
-                            {statusLabel[app.status as ApplicationStatus]}
+                            {statusLabel[app.status]}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-600">
@@ -272,11 +302,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
                                   key={log.id}
                                   className="flex items-center gap-1 text-xs text-gray-600"
                                 >
-                                  <span>{statusLabel[log.fromStatus as ApplicationStatus]}</span>
+                                  <span>{statusLabel[log.fromStatus]}</span>
                                   <span className="text-gray-400">→</span>
-                                  <span className="font-medium">
-                                    {statusLabel[log.toStatus as ApplicationStatus]}
-                                  </span>
+                                  <span className="font-medium">{statusLabel[log.toStatus]}</span>
                                   <span className="ml-1 text-gray-400">
                                     {logDateFormatter.format(log.createdAt)}
                                   </span>

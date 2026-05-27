@@ -12,21 +12,32 @@ import {
   userProfileTable,
 } from '@/models/Schema';
 
-type ApplicationStatus = 'PENDING' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
+type ApplicationStatus =
+  | 'PENDING'
+  | 'REVIEWED'
+  | 'INTERVIEWED'
+  | 'ASSESSMENT'
+  | 'OFFERING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
 
 type AdminApplicantProfilePageProps = {
   params: Promise<{ locale: string; id: string; applicationId: string }>;
 };
 
-function statusBadgeClass(status: ApplicationStatus): string {
+function statusBadgeClass(status: string): string {
   if (status === 'ACCEPTED') {
     return 'bg-green-100 text-green-700';
   }
-  if (status === 'REJECTED') {
+  if (status === 'REJECTED' || status === 'WITHDRAWN') {
     return 'bg-red-100 text-red-700';
   }
+  if (status === 'OFFERING' || status === 'INTERVIEWED' || status === 'ASSESSMENT') {
+    return 'bg-blue-100 text-blue-700';
+  }
   if (status === 'REVIEWED') {
-    return 'bg-red-100 text-red-700';
+    return 'bg-yellow-100 text-yellow-700';
   }
   return 'bg-gray-100 text-gray-600';
 }
@@ -85,8 +96,12 @@ export default async function AdminApplicantProfilePage(props: AdminApplicantPro
   const statusLabel: Record<ApplicationStatus, string> = {
     PENDING: t('status_pending'),
     REVIEWED: t('status_reviewed'),
+    INTERVIEWED: t('status_interviewed'),
+    ASSESSMENT: t('status_assessment'),
+    OFFERING: t('status_offering'),
     ACCEPTED: t('status_accepted'),
     REJECTED: t('status_rejected'),
+    WITHDRAWN: t('status_withdrawn'),
   };
 
   return (

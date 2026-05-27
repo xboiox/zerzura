@@ -6,6 +6,7 @@ import { Link } from '@/libs/I18nNavigation';
 
 type AdminNavProps = {
   isSuperAdmin: boolean;
+  isAdmin: boolean;
 };
 
 export function AdminNav(props: AdminNavProps) {
@@ -32,12 +33,15 @@ export function AdminNav(props: AdminNavProps) {
       <Link href="/admin/jobs" className={linkClass('/admin/jobs')}>
         {t('nav_jobs')}
       </Link>
+      <Link href="/admin/applicants" className={linkClass('/admin/applicants')}>
+        {t('nav_applicants')}
+      </Link>
       {props.isSuperAdmin && (
         <Link href="/admin/company" className={linkClass('/admin/company')}>
           {t('nav_company')}
         </Link>
       )}
-      {props.isSuperAdmin && (
+      {props.isAdmin && (
         <Link href="/admin/users" className={linkClass('/admin/users')}>
           {t('nav_users')}
         </Link>

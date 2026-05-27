@@ -4,14 +4,31 @@ import { useTranslations } from 'next-intl';
 import { useRef, useTransition } from 'react';
 import { updateApplicationStatus } from '@/actions/applicationActions';
 
-type ApplicationStatus = 'PENDING' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
+type ApplicationStatus =
+  | 'PENDING'
+  | 'REVIEWED'
+  | 'INTERVIEWED'
+  | 'ASSESSMENT'
+  | 'OFFERING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
 
 type StatusUpdateFormProps = {
   applicationId: string;
   currentStatus: ApplicationStatus;
 };
 
-const ALL_STATUSES: ApplicationStatus[] = ['PENDING', 'REVIEWED', 'ACCEPTED', 'REJECTED'];
+const ALL_STATUSES: ApplicationStatus[] = [
+  'PENDING',
+  'REVIEWED',
+  'INTERVIEWED',
+  'ASSESSMENT',
+  'OFFERING',
+  'ACCEPTED',
+  'REJECTED',
+  'WITHDRAWN',
+];
 
 export function StatusUpdateForm(props: StatusUpdateFormProps) {
   const t = useTranslations('AdminApplicantsPage');
@@ -21,8 +38,12 @@ export function StatusUpdateForm(props: StatusUpdateFormProps) {
   const statusLabels: Record<ApplicationStatus, string> = {
     PENDING: t('status_pending'),
     REVIEWED: t('status_reviewed'),
+    INTERVIEWED: t('status_interviewed'),
+    ASSESSMENT: t('status_assessment'),
+    OFFERING: t('status_offering'),
     ACCEPTED: t('status_accepted'),
     REJECTED: t('status_rejected'),
+    WITHDRAWN: t('status_withdrawn'),
   };
 
   const handleUpdate = () => {

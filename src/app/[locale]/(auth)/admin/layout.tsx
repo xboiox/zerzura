@@ -23,6 +23,7 @@ export default async function AdminLayout(props: AdminLayoutProps) {
   ]);
   const { role } = (sessionClaims?.metadata ?? {}) as { role?: string };
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -44,7 +45,7 @@ export default async function AdminLayout(props: AdminLayoutProps) {
           </Link>
         </div>
 
-        <AdminNav isSuperAdmin={isSuperAdmin} />
+        <AdminNav isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} />
 
         <div className="flex items-center justify-between border-t border-gray-200 p-3">
           <SignOutButton>

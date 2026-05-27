@@ -10,7 +10,15 @@ import { resend } from '@/libs/Resend';
 import { applicationStatusLogTable, applicationTable, jobTable } from '@/models/Schema';
 import { ApplicationValidation } from '@/validations/ApplicationValidation';
 
-type ApplicationStatus = 'PENDING' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
+type ApplicationStatus =
+  | 'PENDING'
+  | 'REVIEWED'
+  | 'INTERVIEWED'
+  | 'ASSESSMENT'
+  | 'OFFERING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'WITHDRAWN';
 
 type AdminEmailAddress = { emailAddress: string; firstName: string | null };
 
@@ -148,8 +156,12 @@ export async function updateApplicationStatus(
       const statusLabel: Record<ApplicationStatus, string> = {
         PENDING: 'Menunggu',
         REVIEWED: 'Ditinjau',
+        INTERVIEWED: 'Wawancara',
+        ASSESSMENT: 'Tes/Asesmen',
+        OFFERING: 'Penawaran',
         ACCEPTED: 'Diterima',
         REJECTED: 'Ditolak',
+        WITHDRAWN: 'Dicabut',
       };
       const job = await db.query.jobTable.findFirst({
         where: eq(jobTable.id, application.jobId),

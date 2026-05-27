@@ -109,8 +109,12 @@
     "cv_link": "Lihat CV",
     "status_pending": "Menunggu",
     "status_reviewed": "Ditinjau",
+    "status_interviewed": "Wawancara",
+    "status_assessment": "Tes/Asesmen",
+    "status_offering": "Penawaran",
     "status_accepted": "Diterima",
     "status_rejected": "Ditolak",
+    "status_withdrawn": "Dicabut",
     "cancel_application": "Batalkan",
     "confirm_cancel": "Batalkan lamaran ini?",
     "cancel_confirm_yes": "Ya, batalkan",
@@ -243,6 +247,7 @@
   "AdminLayout": {
     "nav_dashboard": "Dashboard",
     "nav_jobs": "Kelola Lowongan",
+    "nav_applicants": "Semua Pelamar",
     "nav_company": "Profil Perusahaan",
     "nav_users": "Kelola Admin",
     "sign_out": "Keluar"
@@ -252,7 +257,13 @@
     "total_jobs": "Total Lowongan",
     "published_jobs": "Lowongan Aktif",
     "draft_jobs": "Draft",
-    "expired_jobs": "Kadaluarsa"
+    "expired_jobs": "Kadaluarsa",
+    "expiring_jobs": "Segera Berakhir",
+    "new_applicants_title": "Pelamar Baru",
+    "unreviewed_label": "Belum Ditinjau",
+    "reviewed_label": "Ditinjau",
+    "ongoing_label": "Dalam Proses",
+    "closed_label": "Selesai"
   },
   "AdminJobsPage": {
     "title": "Kelola Lowongan",
@@ -285,7 +296,8 @@
     "confirm_deactivate_cancel": "Batal",
     "prev_page": "Sebelumnya",
     "next_page": "Berikutnya",
-    "applicants_button": "Pelamar"
+    "applicants_button": "Pelamar",
+    "table_applicants": "Pelamar"
   },
   "JobForm": {
     "create_title": "Tambah Lowongan Baru",
@@ -353,8 +365,12 @@
     "update_status": "Simpan",
     "status_pending": "Menunggu",
     "status_reviewed": "Ditinjau",
+    "status_interviewed": "Wawancara",
+    "status_assessment": "Tes/Asesmen",
+    "status_offering": "Penawaran",
     "status_accepted": "Diterima",
-    "status_rejected": "Ditolak"
+    "status_rejected": "Ditolak",
+    "status_withdrawn": "Dicabut"
   },
   "AdminUsersPage": {
     "title": "Kelola Admin",
@@ -384,7 +400,41 @@
     "invite_email_placeholder": "admin@example.com",
     "invite_button": "Kirim Undangan",
     "invite_submitting": "Mengirim...",
-    "invite_success": "Undangan berhasil dikirim."
+    "invite_success": "Undangan berhasil dikirim.",
+    "all_users_title": "Semua Pengguna Terdaftar",
+    "col_applications": "Lamaran",
+    "no_users": "Tidak ada pengguna ditemukan."
+  },
+  "AdminAllApplicantsPage": {
+    "title": "Semua Pelamar",
+    "filter_all": "Semua",
+    "filter_unreviewed": "Belum Ditinjau",
+    "filter_reviewed": "Ditinjau",
+    "filter_ongoing": "Dalam Proses",
+    "filter_closed": "Selesai",
+    "col_name": "Nama",
+    "col_job": "Posisi",
+    "col_status": "Status",
+    "col_date": "Tanggal",
+    "col_cv": "CV",
+    "download_cv": "Unduh CV",
+    "no_applicants": "Tidak ada pelamar ditemukan."
+  },
+  "AdminUserProfilePage": {
+    "title": "Profil Pengguna",
+    "back_to_users": "Kembali ke Pengguna",
+    "personal_info_title": "Informasi Pribadi",
+    "phone_label": "Telepon",
+    "city_label": "Kota",
+    "skills_label": "Keahlian",
+    "no_profile": "Data profil belum diisi.",
+    "applications_title": "Riwayat Lamaran",
+    "col_job": "Posisi",
+    "col_status": "Status",
+    "col_date": "Tanggal Melamar",
+    "col_cv": "CV",
+    "download_cv": "Unduh CV",
+    "no_applications": "Belum ada lamaran."
   },
   "AdminApplicantProfilePage": {
     "back_to_applicants": "Kembali ke Pelamar",
@@ -403,7 +453,11 @@
     "history_title": "Riwayat Status",
     "status_pending": "Menunggu",
     "status_reviewed": "Ditinjau",
+    "status_interviewed": "Wawancara",
+    "status_assessment": "Tes/Asesmen",
+    "status_offering": "Penawaran",
     "status_accepted": "Diterima",
-    "status_rejected": "Ditolak"
+    "status_rejected": "Ditolak",
+    "status_withdrawn": "Dicabut"
   }
 }

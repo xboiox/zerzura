@@ -50,6 +50,13 @@
       "when": 1779783885168,
       "tag": "0006_silky_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779853638285,
+      "tag": "0007_cooing_catseye",
+      "breakpoints": true
     }
   ]
 }

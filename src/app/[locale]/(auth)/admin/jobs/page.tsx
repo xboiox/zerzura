@@ -1,5 +1,5 @@
 import type { InferSelectModel, SQL } from 'drizzle-orm';
-import { and, asc, count, desc, eq, gt, ilike, lte } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, ilike, inArray, lte } from 'drizzle-orm';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { updateJobStatus } from '@/actions/jobActions';
 import { ActionButton } from '@/components/admin/ActionButton';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { db } from '@/libs/DB';
 import { Link } from '@/libs/I18nNavigation';
-import { jobTable, jobTypeEnum } from '@/models/Schema';
+import { applicationTable, jobTable, jobTypeEnum } from '@/models/Schema';
 
 const PAGE_SIZE = 15;
 
@@ -127,6 +127,7 @@ function renderJobRow(
   locale: string,
   labels: JobRowLabels,
   typeLabel: string,
+  applicantsCount: number,
 ) {
   const isExpired = job.deadline < now;
   const publishAction = updateJobStatus.bind(null, job.id, 'PUBLISHED');
@@ -156,18 +157,20 @@ function renderJobRow(
       </TableCell>
       <TableCell className="text-gray-600">{deadline}</TableCell>
       <TableCell>
+        <Link
+          href={`/admin/jobs/${job.id}/applicants`}
+          className="font-medium text-red-700 hover:underline"
+        >
+          {applicantsCount}
+        </Link>
+      </TableCell>
+      <TableCell>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/admin/jobs/${job.id}/edit`}
             className="rounded px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
           >
             {labels.edit}
-          </Link>
-          <Link
-            href={`/admin/jobs/${job.id}/applicants`}
-            className="rounded px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
-            {labels.applicants}
           </Link>
 
           {job.status === 'DRAFT' && (
@@ -269,6 +272,17 @@ export default async function AdminJobsPage(props: AdminJobsPageProps) {
   const total = getCount(totalResult);
   const hasNextPage = rawJobs.length > PAGE_SIZE;
   const jobs = rawJobs.slice(0, PAGE_SIZE);
+
+  const jobIds = jobs.map((j) => j.id);
+  const applicantCountRows =
+    jobIds.length > 0
+      ? await db
+          .select({ jobId: applicationTable.jobId, total: count() })
+          .from(applicationTable)
+          .where(inArray(applicationTable.jobId, jobIds))
+          .groupBy(applicationTable.jobId)
+      : [];
+  const applicantCountByJobId = new Map(applicantCountRows.map((r) => [r.jobId, r.total]));
 
   const buildUrl = (overrides: Record<string, string | undefined>) => {
     const current = new URLSearchParams();
@@ -442,11 +456,21 @@ export default async function AdminJobsPage(props: AdminJobsPageProps) {
                       <span className="text-gray-400">{sortIndicator('deadline', sort, dir)}</span>
                     </Link>
                   </TableHead>
+                  <TableHead>{t('table_applicants')}</TableHead>
                   <TableHead>{t('table_actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jobs.map((job) => renderJobRow(job, now, locale, rowLabels, tType(job.jobType)))}
+                {jobs.map((job) =>
+                  renderJobRow(
+                    job,
+                    now,
+                    locale,
+                    rowLabels,
+                    tType(job.jobType),
+                    applicantCountByJobId.get(job.id) ?? 0,
+                  ),
+                )}
               </TableBody>
             </Table>
           </div>

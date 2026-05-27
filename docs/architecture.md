@@ -43,7 +43,7 @@ src/
 │   │   │   │   ├── user-profile/[[...user-profile]]/page.tsx  # ProfileForm + Clerk UserProfile
 │   │   │   │   └── layout.tsx        # Sidebar: Dashboard (+ badge notif), My Profile, Browse Jobs
 │   │   │   └── admin/                # Admin + Super Admin area
-│   │   │       ├── page.tsx          # Dashboard: statistik job
+│   │   │       ├── page.tsx          # Dashboard: statistik job + stat cards New Applicants (clickable)
 │   │   │       ├── jobs/
 │   │   │       │   ├── page.tsx      # Tabel jobs + filter + search + pagination
 │   │   │       │   ├── new/page.tsx
@@ -52,7 +52,11 @@ src/
 │   │   │       │       └── applicants/
 │   │   │       │           ├── page.tsx              # Tabel pelamar + status update + cover letter
 │   │   │       │           └── [applicationId]/page.tsx  # Profil lengkap pelamar + history
+│   │   │       ├── applicants/page.tsx   # /admin/applicants → semua pelamar lintas job + filter status
 │   │   │       ├── company/page.tsx
+│   │   │       ├── users/
+│   │   │       │   ├── page.tsx              # Daftar admin + undangan tertunda + semua pengguna terdaftar
+│   │   │       │   └── [clerkId]/page.tsx    # Profil pengguna (data pribadi + riwayat lamaran)
 │   │   │       ├── pages/
 │   │   │       │   ├── about/page.tsx
 │   │   │       │   ├── services/page.tsx
@@ -164,7 +168,7 @@ src/
 | applicantClerkId | varchar | FK → UserProfile.clerkId |
 | cvUrl | varchar | Snapshot URL saat apply — tidak berubah |
 | coverLetter | text | |
-| status | enum | PENDING, REVIEWED, ACCEPTED, REJECTED |
+| status | enum | PENDING, REVIEWED, INTERVIEWED, ASSESSMENT, OFFERING, ACCEPTED, REJECTED, WITHDRAWN |
 | applicantSeen | boolean | Default true. Set ke false saat admin update status. Badge notifikasi di sidebar pelamar. |
 | createdAt | timestamp | |
 | updatedAt | timestamp | Update saat status berubah |
@@ -178,8 +182,8 @@ Audit trail setiap perubahan status. Diisi oleh `updateApplicationStatus` action
 |---|---|---|
 | id | uuid | Primary key |
 | applicationId | uuid | FK → Application.id |
-| fromStatus | enum | Status sebelumnya |
-| toStatus | enum | Status baru |
+| fromStatus | enum | Status sebelumnya (8 nilai) |
+| toStatus | enum | Status baru (8 nilai) |
 | reason | text? | Opsional |
 | changedByClerkId | varchar | Admin yang mengubah |
 | createdAt | timestamp | |

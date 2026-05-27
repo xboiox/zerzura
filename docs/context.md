@@ -12,17 +12,22 @@ Job portal web app untuk satu perusahaan. Dua fungsi utama:
 
 ## Status Saat Ini
 
-**Fase:** Phase 8 selesai ✅ — Super Admin Features
-**Selesai:** Phase 0–8 (termasuk Phase 7 & 9)
+**Fase:** Phase 8 + Admin Panel Improvements selesai ✅
+**Selesai:** Phase 0–8 (termasuk Phase 7 & 9) + Admin Panel Improvements
 
 **Fitur yang sudah live:**
 - Auth & middleware (Clerk, role redirect, isActive guard)
 - Halaman publik: homepage, /jobs listing (search + filter + pagination), /jobs/[id] detail
 - Halaman marketing: /services, /portfolio, /about — konten dari DB
-- Admin: manage jobs (CRUD, status workflow), manage marketing pages, company profile
-- Admin: daftar pelamar per lowongan, update status lamaran, lihat cover letter, lihat profil pelamar
+- Admin: manage jobs (CRUD, status workflow) + kolom jumlah pelamar per lowongan (clickable)
+- Admin: manage marketing pages, company profile
+- Admin: daftar pelamar per lowongan, update status lamaran (8 status), lihat cover letter, lihat profil pelamar
+- Admin: dashboard dengan stat cards Job (total/published/draft/expired/expiring) + New Applicants (Unreviewed/Reviewed/Ongoing/Closed — clickable)
+- Admin: halaman global semua pelamar `/admin/applicants` dengan filter status (Unreviewed/Reviewed/Ongoing/Closed)
+- Admin: halaman profil pengguna `/admin/users/[clerkId]` — data pribadi (telepon, kota, skills) + riwayat lamaran
+- Admin: halaman Manage Users dengan daftar admin, undangan tertunda, dan semua pengguna terdaftar (nama + jumlah lamaran)
 - Pelamar: apply (upload CV via Uploadthing + cover letter), batalkan lamaran (PENDING only)
-- Pelamar: dashboard (stat cards + filter by status + pagination), riwayat status tiap lamaran
+- Pelamar: dashboard (stat cards + filter by status + pagination), riwayat status tiap lamaran (8 status)
 - Pelamar: My Profile (data pribadi: telepon, kota, skills + Clerk account management)
 - Notifikasi email ke admin saat ada lamaran baru
 - Notifikasi email ke pelamar saat status lamaran berubah
@@ -54,7 +59,7 @@ Role disimpan di Clerk `publicMetadata.role`. Default (tidak ada value) = USER.
 ```
 UserProfile          → data extra user (profil pelamar: telepon/kota/skills, isActive admin)
 Job                  → lowongan (DRAFT/PUBLISHED/INACTIVE)
-Application          → lamaran + CV snapshot URL + applicantSeen (notifikasi)
+Application          → lamaran + CV snapshot URL + applicantSeen (notifikasi) + status (8 nilai)
 ApplicationStatusLog → audit trail setiap perubahan status (diisi oleh updateApplicationStatus)
 CompanyProfile       → singleton: nama, deskripsi, alamat, logo, kontak, sosial media
 AboutContent         → singleton: konten halaman About Us (visi, misi, nilai, 3 kantor + peta)
@@ -79,6 +84,17 @@ Skema lengkap: [docs/architecture.md](architecture.md)
 2. Klik nama pelamar → `/admin/jobs/[id]/applicants/[applicationId]` (profil lengkap)
    - Atau update inline via dropdown `StatusUpdateForm` di tabel
 3. `updateApplicationStatus` action: update DB → insert `ApplicationStatusLog` → set `applicantSeen = false` → kirim email ke pelamar
+4. Status tersedia: PENDING → REVIEWED → INTERVIEWED → ASSESSMENT → OFFERING → ACCEPTED/REJECTED/WITHDRAWN
+
+### Admin Lihat Semua Pelamar
+1. Sidebar admin → klik "Semua Pelamar" → `/admin/applicants`
+2. Filter via pill: All / Unreviewed / Reviewed / Ongoing / Closed (URL-based)
+3. Tabel pelamar lintas semua lowongan: nama, lowongan, status, tanggal, CV
+4. Klik nama pelamar → `/admin/jobs/[id]/applicants/[applicationId]` (profil per-job)
+
+### Admin Lihat Profil Pengguna
+1. `/admin/users` → section "Semua Pengguna Terdaftar" → klik nama user
+2. `/admin/users/[clerkId]` → informasi pribadi (telepon, kota, skills dari UserProfile) + riwayat semua lamaran
 
 ### Notifikasi In-App Pelamar
 1. Badge merah di sidebar: query `applicationTable` where `applicantSeen = false`

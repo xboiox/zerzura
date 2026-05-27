@@ -109,8 +109,12 @@
     "cv_link": "View CV",
     "status_pending": "Pending",
     "status_reviewed": "Reviewed",
+    "status_interviewed": "Interviewed",
+    "status_assessment": "Assessment",
+    "status_offering": "Offering",
     "status_accepted": "Accepted",
     "status_rejected": "Rejected",
+    "status_withdrawn": "Withdrawn",
     "cancel_application": "Cancel",
     "confirm_cancel": "Cancel this application?",
     "cancel_confirm_yes": "Yes, cancel",
@@ -243,6 +247,7 @@
   "AdminLayout": {
     "nav_dashboard": "Dashboard",
     "nav_jobs": "Manage Jobs",
+    "nav_applicants": "All Applicants",
     "nav_company": "Company Profile",
     "nav_users": "Manage Admins",
     "sign_out": "Sign out"
@@ -252,7 +257,13 @@
     "total_jobs": "Total Jobs",
     "published_jobs": "Active Jobs",
     "draft_jobs": "Drafts",
-    "expired_jobs": "Expired"
+    "expired_jobs": "Expired",
+    "expiring_jobs": "Expiring Soon",
+    "new_applicants_title": "New Applicants",
+    "unreviewed_label": "Unreviewed",
+    "reviewed_label": "Reviewed",
+    "ongoing_label": "Ongoing",
+    "closed_label": "Closed"
   },
   "AdminJobsPage": {
     "title": "Manage Jobs",
@@ -285,7 +296,8 @@
     "confirm_deactivate_cancel": "Cancel",
     "prev_page": "Previous",
     "next_page": "Next",
-    "applicants_button": "Applicants"
+    "applicants_button": "Applicants",
+    "table_applicants": "Applicants"
   },
   "JobForm": {
     "create_title": "Add New Job",
@@ -353,8 +365,12 @@
     "update_status": "Save",
     "status_pending": "Pending",
     "status_reviewed": "Reviewed",
+    "status_interviewed": "Interviewed",
+    "status_assessment": "Assessment",
+    "status_offering": "Offering",
     "status_accepted": "Accepted",
-    "status_rejected": "Rejected"
+    "status_rejected": "Rejected",
+    "status_withdrawn": "Withdrawn"
   },
   "AdminUsersPage": {
     "title": "Manage Admins",
@@ -384,7 +400,41 @@
     "invite_email_placeholder": "admin@example.com",
     "invite_button": "Send Invitation",
     "invite_submitting": "Sending...",
-    "invite_success": "Invitation sent successfully."
+    "invite_success": "Invitation sent successfully.",
+    "all_users_title": "All Registered Users",
+    "col_applications": "Applications",
+    "no_users": "No users found."
+  },
+  "AdminAllApplicantsPage": {
+    "title": "All Applicants",
+    "filter_all": "All",
+    "filter_unreviewed": "Unreviewed",
+    "filter_reviewed": "Reviewed",
+    "filter_ongoing": "Ongoing",
+    "filter_closed": "Closed",
+    "col_name": "Name",
+    "col_job": "Position",
+    "col_status": "Status",
+    "col_date": "Date",
+    "col_cv": "CV",
+    "download_cv": "Download CV",
+    "no_applicants": "No applicants found."
+  },
+  "AdminUserProfilePage": {
+    "title": "User Profile",
+    "back_to_users": "Back to Users",
+    "personal_info_title": "Personal Information",
+    "phone_label": "Phone",
+    "city_label": "City",
+    "skills_label": "Skills",
+    "no_profile": "No profile data filled in yet.",
+    "applications_title": "Applications",
+    "col_job": "Position",
+    "col_status": "Status",
+    "col_date": "Applied",
+    "col_cv": "CV",
+    "download_cv": "Download CV",
+    "no_applications": "No applications yet."
   },
   "AdminApplicantProfilePage": {
     "back_to_applicants": "Back to Applicants",
@@ -403,7 +453,11 @@
     "history_title": "Status History",
     "status_pending": "Pending",
     "status_reviewed": "Reviewed",
+    "status_interviewed": "Interviewed",
+    "status_assessment": "Assessment",
+    "status_offering": "Offering",
     "status_accepted": "Accepted",
-    "status_rejected": "Rejected"
+    "status_rejected": "Rejected",
+    "status_withdrawn": "Withdrawn"
   }
 }

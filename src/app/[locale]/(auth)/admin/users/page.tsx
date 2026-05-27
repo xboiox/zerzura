@@ -1,10 +1,11 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { inArray } from 'drizzle-orm';
+import { count, inArray, not } from 'drizzle-orm';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { InviteAdminForm } from '@/components/admin/InviteAdminForm';
 import { ToggleAdminStatusButton } from '@/components/admin/ToggleAdminStatusButton';
 import { db } from '@/libs/DB';
-import { userProfileTable } from '@/models/Schema';
+import { Link } from '@/libs/I18nNavigation';
+import { applicationTable, userProfileTable } from '@/models/Schema';
 
 type AdminUsersPageProps = {
   params: Promise<{ locale: string }>;
@@ -31,14 +32,54 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
   });
 
   const adminClerkIds = adminUsers.map((u) => u.id);
-  const profiles =
+  const adminProfiles =
     adminClerkIds.length > 0
       ? await db.query.userProfileTable.findMany({
           where: inArray(userProfileTable.clerkId, adminClerkIds),
         })
       : [];
 
-  const profileByClerkId = new Map(profiles.map((p) => [p.clerkId, p]));
+  const profileByClerkId = new Map(adminProfiles.map((p) => [p.clerkId, p]));
+
+  const applicantProfiles =
+    adminClerkIds.length > 0
+      ? await db.query.userProfileTable.findMany({
+          where: not(inArray(userProfileTable.clerkId, adminClerkIds)),
+        })
+      : await db.query.userProfileTable.findMany();
+
+  const applicantClerkIds = applicantProfiles.map((p) => p.clerkId);
+
+  const applicationCounts =
+    applicantClerkIds.length > 0
+      ? await db
+          .select({
+            applicantClerkId: applicationTable.applicantClerkId,
+            total: count(),
+          })
+          .from(applicationTable)
+          .where(inArray(applicationTable.applicantClerkId, applicantClerkIds))
+          .groupBy(applicationTable.applicantClerkId)
+      : [];
+
+  const countByClerkId = new Map(applicationCounts.map((c) => [c.applicantClerkId, c.total]));
+
+  const applicantClerkData = await Promise.all(
+    applicantProfiles.map(async (profile) => {
+      try {
+        const user = await client.users.getUser(profile.clerkId);
+        const nameParts = [user.firstName, user.lastName].filter(Boolean);
+        const name =
+          nameParts.length > 0
+            ? nameParts.join(' ')
+            : (user.emailAddresses[0]?.emailAddress ?? profile.clerkId);
+        const email = user.emailAddresses[0]?.emailAddress ?? '—';
+        return { ...profile, name, email };
+      } catch {
+        return { ...profile, name: profile.clerkId, email: '—' };
+      }
+    }),
+  );
 
   const dateFormatter = new Intl.DateTimeFormat(locale === 'id' ? 'id-ID' : 'en-US', {
     day: 'numeric',
@@ -164,6 +205,49 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
 
       {/* Invite form */}
       <InviteAdminForm />
+
+      {/* All registered users */}
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-base font-semibold text-gray-900">{t('all_users_title')}</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50 text-left">
+                <th className="px-4 py-3 font-medium text-gray-600">{t('col_name')}</th>
+                <th className="px-4 py-3 font-medium text-gray-600">{t('col_email')}</th>
+                <th className="px-4 py-3 font-medium text-gray-600">{t('col_applications')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applicantClerkData.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
+                    {t('no_users')}
+                  </td>
+                </tr>
+              )}
+              {applicantClerkData.map((user) => (
+                <tr key={user.clerkId} className="border-b border-gray-100 last:border-0">
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/admin/users/${user.clerkId}`}
+                      className="font-medium text-gray-900 hover:text-red-700 hover:underline"
+                    >
+                      {user.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {countByClerkId.get(user.clerkId) ?? 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
