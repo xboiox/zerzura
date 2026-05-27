@@ -5,6 +5,7 @@ import { getI18nPath } from '@/utils/Helpers';
 
 type SignInPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ redirect_url?: string }>;
 };
 
 export async function generateMetadata(props: SignInPageProps): Promise<Metadata> {
@@ -22,7 +23,13 @@ export async function generateMetadata(props: SignInPageProps): Promise<Metadata
 
 export default async function SignInPage(props: SignInPageProps) {
   const { locale } = await props.params;
+  const { redirect_url } = await props.searchParams;
   setRequestLocale(locale);
 
-  return <SignIn path={getI18nPath('/sign-in', locale)} />;
+  return (
+    <SignIn
+      path={getI18nPath('/sign-in', locale)}
+      fallbackRedirectUrl={redirect_url ?? '/dashboard'}
+    />
+  );
 }

@@ -1,134 +1,157 @@
+import { and, asc, desc, gt, eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Sponsors } from '@/components/Sponsors';
+import { JobCard } from '@/components/jobs/JobCard';
+import { GlobeHeroSection } from '@/components/marketing/GlobeHeroSection';
+import { LogoMarquee } from '@/components/marketing/LogoMarquee';
+import { db } from '@/libs/DB';
+import { Link } from '@/libs/I18nNavigation';
+import { clientLogoTable, jobTable } from '@/models/Schema';
+import { AppConfig } from '@/utils/AppConfig';
 
-type IndexPageProps = {
+type HomePageProps = {
   params: Promise<{ locale: string }>;
 };
 
-export async function generateMetadata(props: IndexPageProps): Promise<Metadata> {
+export async function generateMetadata(props: HomePageProps): Promise<Metadata> {
   const { locale } = await props.params;
-  const t = await getTranslations({
-    locale,
-    namespace: 'Index',
-  });
-
+  const t = await getTranslations({ locale, namespace: 'HomePage' });
   return {
-    title: t('meta_title'),
-    description: t('meta_description'),
+    title: t('meta_title', { name: AppConfig.name }),
+    description: t('meta_description', { name: AppConfig.name }),
   };
 }
 
-export default async function Index(props: IndexPageProps) {
+export default async function IndexPage(props: HomePageProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const t = await getTranslations({
-    locale,
-    namespace: 'Index',
-  });
+  const t = await getTranslations({ locale, namespace: 'HomePage' });
+  const tService = await getTranslations({ locale, namespace: 'ServicePage' });
+
+  const [company, clientLogos, recentJobs] = await Promise.all([
+    db.query.companyProfileTable.findFirst(),
+    db.select().from(clientLogoTable).orderBy(asc(clientLogoTable.createdAt)),
+    db
+      .select()
+      .from(jobTable)
+      .where(and(eq(jobTable.status, 'PUBLISHED'), gt(jobTable.deadline, new Date())))
+      .orderBy(desc(jobTable.createdAt))
+      .limit(6),
+  ]);
+
+  const aboutFocusPoints = [t('about_focus_1'), t('about_focus_2'), t('about_focus_3')];
+
+  const services = [
+    { title: tService('card_recruitment_title'), desc: tService('card_recruitment_desc') },
+    { title: tService('card_selection_title'), desc: tService('card_selection_desc') },
+    { title: tService('card_career_title'), desc: tService('card_career_desc') },
+    { title: tService('card_placement_title'), desc: tService('card_placement_desc') },
+  ];
 
   return (
-    <>
-      <p>
-        {`Follow `}
-        <a
-          className="text-blue-700 hover:border-b-2 hover:border-blue-700"
-          href="https://twitter.com/ixartz"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          @Ixartz on Twitter
-        </a>
-        {` for updates and more information about the boilerplate.`}
-      </p>
-      <h2 className="mt-5 text-2xl font-bold">
-        Boilerplate Code for Your Next.js Project with Tailwind CSS
-      </h2>
-      <p className="text-base">
-        Next.js Boilerplate is a developer-friendly starter code for Next.js projects, built with
-        Tailwind CSS and TypeScript. {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role */}
-        <span role="img" aria-label={t('zap_emoji_label')}>
-          ⚡️
-        </span>{' '}
-        Designed with developer experience in mind, it includes:
-      </p>
-      <ul className="mt-3 text-base">
-        <li>🚀 Next.js with App Router support</li>
-        <li>🔥 TypeScript for type checking</li>
-        <li>💎 Tailwind CSS integration</li>
-        <li>
-          🔒 Authentication with{' '}
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://clerk.com?utm_source=github&amp;utm_medium=sponsorship&amp;utm_campaign=nextjs-boilerplate"
-          >
-            Clerk
-          </a>{' '}
-          (includes passwordless, social, and multi-factor auth)
-        </li>
-        <li>📦 ORM with DrizzleORM (PostgreSQL, SQLite, MySQL support)</li>
-        <li>
-          💽 Dev database with PGlite and production with{' '}
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://get.neon.com/BMFYNtx"
-          >
-            Neon
-          </a>
-        </li>
-        <li>
-          🌐 Multi-language support (i18n) with next-intl and{' '}
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://l.crowdin.com/next-js"
-          >
-            Crowdin
-          </a>
-        </li>
-        <li>🔴 Form handling (React Hook Form) and validation (Zod)</li>
-        <li>📏 Linting and formatting (ESLint, Prettier)</li>
-        <li>🦊 Git hooks and commit linting (Husky, Commitlint)</li>
-        <li>🦺 Testing suite (Vitest, React Testing Library, Playwright)</li>
-        <li>🎉 Storybook for UI development</li>
-        <li>
-          🐰 AI-powered code reviews with{' '}
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://www.coderabbit.ai?utm_source=next_js_starter&utm_medium=github&utm_campaign=next_js_starter_oss_2025"
-          >
-            CodeRabbit
-          </a>
-        </li>
-        <li>
-          🚨 Error monitoring (
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://sentry.io/for/nextjs/?utm_source=github&amp;utm_medium=paid-community&amp;utm_campaign=general-fy25q1-nextjs&amp;utm_content=github-banner-nextjsboilerplate-logo"
-          >
-            Sentry
-          </a>
-          ) and logging (LogTape, an alternative to Pino.js)
-        </li>
-        <li>🖥️ Monitoring as Code (Checkly)</li>
-        <li>
-          🔐 Security and bot protection (
-          <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://launch.arcjet.com/Q6eLbRE"
-          >
-            Arcjet
-          </a>
-          )
-        </li>
-        <li>🤖 SEO optimization (metadata, JSON-LD, Open Graph tags)</li>
-        <li>⚙️ Development tools (VSCode config, bundler analyzer, changelog generation)</li>
-      </ul>
-      <p className="text-base">
-        Our sponsors&apos; exceptional support has made this project possible. Their services
-        integrate seamlessly with the boilerplate, and we recommend trying them out.
-      </p>
-      <h2 className="mt-5 text-2xl font-bold">{t('sponsors_title')}</h2>
-      <Sponsors />
-    </>
+    <div>
+      <GlobeHeroSection
+        companyName={company?.name ?? AppConfig.name}
+        tagline={t('tagline')}
+        ctaJobsLabel={t('view_all_jobs')}
+        ctaContactLabel={t('cta_contact')}
+      />
+
+      {/* Klien Kami */}
+      {clientLogos.length > 0 && (
+        <section className="border-b border-gray-100 bg-white py-12">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="mb-2 text-center text-xs font-semibold tracking-wide text-red-700 uppercase">
+              {t('clients_label')}
+            </p>
+            <h2 className="mb-8 text-center text-xl font-bold text-gray-900">
+              {t('clients_title')}
+            </h2>
+          </div>
+          <LogoMarquee logos={clientLogos} />
+        </section>
+      )}
+
+      {/* Tentang Kami */}
+      {company && (
+        <section className="bg-gray-50 py-14">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+              <div>
+                <p className="mb-2 text-sm font-semibold tracking-wide text-red-700 uppercase">
+                  {t('about_preview_title')}
+                </p>
+                <h2 className="mb-4 text-2xl font-bold text-gray-900">{company.name}</h2>
+                <p className="mb-6 text-gray-600">{t('about_description')}</p>
+                <ul className="space-y-3">
+                  {aboutFocusPoints.map((point) => (
+                    <li key={point} className="flex items-start gap-3 text-sm text-gray-700">
+                      <span className="mt-1 size-1.5 shrink-0 rounded-full bg-red-700" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6">
+                  <Link href="/about" className="text-sm font-medium text-red-700 hover:underline">
+                    {t('about_read_more')} →
+                  </Link>
+                </div>
+              </div>
+              <div className="rounded-xl bg-red-700 p-8 text-white">
+                <p className="mb-4 text-lg leading-relaxed font-medium italic">
+                  &ldquo;{t('tagline')}&rdquo;
+                </p>
+                <p className="text-sm text-red-200">{company.name}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Layanan */}
+      <section className="border-b border-gray-100 bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-8 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">{t('services_preview_title')}</h2>
+            <Link href="/services" className="text-sm font-medium text-red-700 hover:underline">
+              {t('services_read_more')}
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {services.map((service) => (
+              <div
+                key={service.title}
+                className="rounded-lg border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md"
+              >
+                <h3 className="mb-2 font-semibold text-gray-900">{service.title}</h3>
+                <p className="text-sm text-gray-500">{service.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Lowongan Terbaru */}
+      <section className="bg-gray-50 py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-8 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">{t('recent_jobs_title')}</h2>
+            <Link href="/jobs" className="text-sm font-medium text-red-700 hover:underline">
+              {t('view_all_jobs')}
+            </Link>
+          </div>
+
+          {recentJobs.length === 0 ? (
+            <p className="text-gray-500">{t('no_jobs')}</p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {recentJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }

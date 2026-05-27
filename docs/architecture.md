@@ -11,7 +11,7 @@ Browser
   └── Server Actions (mutations)→ Zod validation → Drizzle → PostgreSQL
                                                   └── Resend (email notifications)
                                                   └── Uploadthing (CV files)
-                                                  └── Clerk API (admin invitations, email lookup)
+                                                  └── Clerk API (admin lookup, email)
 ```
 
 ---
@@ -22,38 +22,45 @@ Browser
 src/
 ├── app/
 │   ├── [locale]/
+│   │   ├── layout.tsx                # Root — ClerkProvider + NextIntlClientProvider
 │   │   ├── (marketing)/              # Public: Navbar + Footer layout
-│   │   │   ├── page.tsx              # /  → homepage
+│   │   │   ├── page.tsx              # / → homepage (company profile + 6 recent jobs)
 │   │   │   ├── jobs/
-│   │   │   │   ├── page.tsx          # /jobs → listing
-│   │   │   │   └── [id]/page.tsx     # /jobs/[id] → detail
-│   │   │   └── layout.tsx
-│   │   ├── (auth)/                   # ClerkProvider wrapper
-│   │   │   ├── (center)/             # Centered card layout
+│   │   │   │   ├── page.tsx          # /jobs → listing (search + filter + pagination)
+│   │   │   │   └── [id]/page.tsx     # /jobs/[id] → detail + ApplyForm (authenticated)
+│   │   │   ├── services/page.tsx     # /services → konten dari DB
+│   │   │   ├── portfolio/page.tsx    # /portfolio → konten dari DB
+│   │   │   ├── about/page.tsx        # /about → konten dari DB
+│   │   │   └── layout.tsx            # Navbar: logo, links, sign-out (if logged in)
+│   │   ├── (auth)/
+│   │   │   ├── layout.tsx            # Thin wrapper — setRequestLocale only
+│   │   │   ├── (center)/             # Centered card layout untuk sign-in/up
 │   │   │   │   ├── sign-in/[[...sign-in]]/page.tsx
 │   │   │   │   ├── sign-up/[[...sign-up]]/page.tsx
 │   │   │   │   └── layout.tsx
-│   │   │   ├── dashboard/            # Pelamar protected area
-│   │   │   │   ├── page.tsx          # Summary lamaran
-│   │   │   │   ├── applications/page.tsx
-│   │   │   │   ├── profile/page.tsx
-│   │   │   │   └── layout.tsx
-│   │   │   ├── admin/                # Admin + Super Admin
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── jobs/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   ├── new/page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       ├── edit/page.tsx
-│   │   │   │   │       └── applicants/page.tsx
-│   │   │   │   ├── company/page.tsx  # SUPER_ADMIN only
-│   │   │   │   ├── users/page.tsx    # SUPER_ADMIN only
-│   │   │   │   └── layout.tsx        # Admin sidebar layout
-│   │   │   └── layout.tsx
-│   │   └── layout.tsx                # Root locale layout (NextIntlClientProvider)
+│   │   │   ├── dashboard/            # Pelamar area (auth guard di middleware)
+│   │   │   │   ├── page.tsx          # Stat cards + tabel lamaran + history + pagination
+│   │   │   │   ├── user-profile/[[...user-profile]]/page.tsx  # ProfileForm + Clerk UserProfile
+│   │   │   │   └── layout.tsx        # Sidebar: Dashboard (+ badge notif), My Profile, Browse Jobs
+│   │   │   └── admin/                # Admin + Super Admin area
+│   │   │       ├── page.tsx          # Dashboard: statistik job
+│   │   │       ├── jobs/
+│   │   │       │   ├── page.tsx      # Tabel jobs + filter + search + pagination
+│   │   │       │   ├── new/page.tsx
+│   │   │       │   └── [id]/
+│   │   │       │       ├── edit/page.tsx
+│   │   │       │       └── applicants/
+│   │   │       │           ├── page.tsx              # Tabel pelamar + status update + cover letter
+│   │   │       │           └── [applicationId]/page.tsx  # Profil lengkap pelamar + history
+│   │   │       ├── company/page.tsx
+│   │   │       ├── pages/
+│   │   │       │   ├── about/page.tsx
+│   │   │       │   ├── services/page.tsx
+│   │   │       │   └── portfolio/page.tsx
+│   │   │       └── layout.tsx        # Admin sidebar
 │   ├── api/
-│   │   ├── webhooks/clerk/route.ts   # Clerk webhook: assign role on user.created
-│   │   └── uploadthing/route.ts      # Uploadthing file handler
+│   │   ├── webhooks/clerk/route.ts   # user.created → insert UserProfile
+│   │   └── uploadthing/route.ts      # CV file upload handler
 │   └── global-error.tsx
 │
 ├── models/
@@ -62,51 +69,64 @@ src/
 ├── validations/                      # Zod schemas — shared client + server
 │   ├── JobValidation.ts
 │   ├── ApplicationValidation.ts
-│   ├── ProfileValidation.ts
-│   └── CompanyValidation.ts
+│   ├── CompanyValidation.ts
+│   └── PageContentValidation.ts
 │
-├── actions/                          # Next.js Server Actions
-│   ├── jobActions.ts
-│   ├── applicationActions.ts
-│   ├── profileActions.ts
-│   ├── userActions.ts
-│   └── companyActions.ts
+├── actions/                          # Next.js Server Actions ('use server')
+│   ├── jobActions.ts                 # createJob, updateJob, updateJobStatus
+│   ├── applicationActions.ts        # applyToJob, updateApplicationStatus, markApplicationsSeen, cancelApplication
+│   ├── userProfileActions.ts        # saveUserProfile
+│   ├── companyActions.ts            # updateCompanyProfile
+│   └── pageActions.ts               # updateAboutContent, updateServicesContent, updatePortfolioContent
 │
 ├── components/
-│   ├── ui/                           # shadcn/ui components
-│   ├── forms/                        # ApplyForm, JobForm, ProfileForm
-│   ├── jobs/                         # JobCard, JobFilters, JobDetail
-│   ├── admin/                        # ApplicantTable, StatusUpdater
-│   └── LocaleSwitcher.tsx            # Existing, keep
+│   ├── ui/                           # shadcn/ui primitives (Button, Badge, Input, etc.)
+│   ├── forms/
+│   │   ├── ApplyForm.tsx             # CV upload (Uploadthing) + cover letter
+│   │   └── ProfileForm.tsx           # Form profil pelamar (telepon, kota, skills)
+│   ├── jobs/
+│   │   └── JobCard.tsx               # Card lowongan (badge tipe, lokasi, gaji, deadline)
+│   ├── about/
+│   │   └── OfficeMapSelector.tsx     # Kartu kantor clickable + iframe Google Maps (client)
+│   ├── marketing/
+│   │   └── LogoMarquee.tsx           # Infinite scroll marquee logo klien (server component)
+│   ├── admin/
+│   │   ├── AdminNav.tsx              # Sidebar navigation links
+│   │   ├── JobForm.tsx               # Form buat/edit lowongan
+│   │   ├── ActionButton.tsx          # Generic action button
+│   │   ├── ClientLogoForm.tsx        # Form tambah logo klien (URL + nama opsional)
+│   │   ├── ConfirmPublishButton.tsx  # Tombol publish dengan inline confirm
+│   │   ├── StatusUpdateForm.tsx      # Dropdown update status lamaran pelamar
+│   │   ├── CoverLetterToggle.tsx     # Toggle tampil/sembunyikan cover letter
+│   │   └── ToastFromUrl.tsx          # Baca ?toast=KEY dari URL, tampilkan toast
+│   ├── dashboard/
+│   │   ├── CancelApplicationButton.tsx  # Batalkan lamaran dengan inline confirm
+│   │   └── MarkApplicationsSeen.tsx     # Client component — mark notif seen on mount
+│   └── LocaleSwitcher.tsx
 │
 ├── libs/                             # Library configurations
-│   ├── DB.ts                         # Drizzle singleton (existing)
-│   ├── Env.ts                        # T3 env validation (extend)
-│   ├── Arcjet.ts                     # Rate limiting base (existing)
-│   ├── Logger.ts                     # Logtape logger (existing)
-│   ├── I18n.ts / I18nRouting.ts      # next-intl (existing)
-│   └── Resend.ts                     # Email client
-│
-├── utils/
-│   ├── AppConfig.ts                  # Update: locales → ['id', 'en'], default 'id'
-│   └── Helpers.ts                    # Utility functions (existing)
+│   ├── DB.ts                         # Drizzle singleton
+│   ├── Env.ts                        # T3 env validation
+│   ├── Arcjet.ts                     # Rate limiting base
+│   ├── Logger.ts                     # Logtape logger
+│   ├── I18n.ts / I18nRouting.ts      # next-intl
+│   ├── Resend.ts                     # Resend email client
+│   └── Uploadthing.ts + UploadthingClient.ts  # Uploadthing router + client hook
 │
 ├── locales/
-│   ├── id.json                       # Indonesian (default) — rename from fr.json
+│   ├── id.json                       # Indonesian (default)
 │   └── en.json                       # English
 │
-└── middleware.ts                     # Clerk auth guard + role redirect + isActive check
+└── proxy.ts                          # Clerk middleware + auth guard + role redirect + Arcjet bot detection
 ```
 
 ---
 
 ## Database Schema
 
-Lima tabel. Clerk mengelola user accounts; kita hanya menyimpan data aplikasi.
+9 tabel. Clerk mengelola user accounts; kita hanya menyimpan data aplikasi.
 
 ### UserProfile
-Menyimpan data extra yang tidak ada di Clerk (profil pelamar, status aktif admin).
-
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | uuid | Primary key |
@@ -115,7 +135,7 @@ Menyimpan data extra yang tidak ada di Clerk (profil pelamar, status aktif admin
 | phone | varchar? | Profil pelamar |
 | city | varchar? | Profil pelamar |
 | skills | text[] | Profil pelamar |
-| defaultCvUrl | varchar? | URL CV default di Uploadthing |
+| defaultCvUrl | varchar? | URL CV default (reserved, belum digunakan) |
 | createdAt | timestamp | |
 | updatedAt | timestamp | |
 
@@ -130,9 +150,9 @@ Menyimpan data extra yang tidak ada di Clerk (profil pelamar, status aktif admin
 | location | varchar | |
 | salaryMin | integer? | |
 | salaryMax | integer? | |
-| deadline | timestamp | Expired = deadline < now() di query |
+| deadline | timestamp | Expired = `deadline < now()` di query |
 | status | enum | DRAFT, PUBLISHED, INACTIVE |
-| createdByClerkId | varchar | FK → UserProfile.clerkId |
+| createdByClerkId | varchar | |
 | createdAt | timestamp | |
 | updatedAt | timestamp | |
 
@@ -145,13 +165,14 @@ Menyimpan data extra yang tidak ada di Clerk (profil pelamar, status aktif admin
 | cvUrl | varchar | Snapshot URL saat apply — tidak berubah |
 | coverLetter | text | |
 | status | enum | PENDING, REVIEWED, ACCEPTED, REJECTED |
+| applicantSeen | boolean | Default true. Set ke false saat admin update status. Badge notifikasi di sidebar pelamar. |
 | createdAt | timestamp | |
-| updatedAt | timestamp | |
+| updatedAt | timestamp | Update saat status berubah |
 
-**Constraint:** UNIQUE(jobId, applicantClerkId) — satu apply per lowongan per pelamar.
+**Constraint:** `UNIQUE(jobId, applicantClerkId)` — satu apply per lowongan per pelamar.
 
 ### ApplicationStatusLog
-Audit trail setiap perubahan status. Reason nullable (hanya diisi untuk perubahan non-forward).
+Audit trail setiap perubahan status. Diisi oleh `updateApplicationStatus` action.
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
@@ -159,48 +180,52 @@ Audit trail setiap perubahan status. Reason nullable (hanya diisi untuk perubaha
 | applicationId | uuid | FK → Application.id |
 | fromStatus | enum | Status sebelumnya |
 | toStatus | enum | Status baru |
-| reason | text? | Wajib untuk perubahan non-forward (lihat F-05) |
+| reason | text? | Opsional |
 | changedByClerkId | varchar | Admin yang mengubah |
 | createdAt | timestamp | |
 
 ### CompanyProfile
-Singleton — selalu satu baris. Di-upsert, bukan insert.
+Singleton (`id = 1`). Kolom: `name`, `logoUrl?`, `description`, `address`, `email?`, `phone?`, `linkedinUrl?`, `whatsappNumber?`, `instagramUrl?`, `updatedAt`.
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | integer | Selalu 1 |
-| name | varchar | |
-| logoUrl | varchar? | |
-| description | text | |
-| address | text | |
-| updatedAt | timestamp | |
+### AboutContent
+Singleton (`id = 1`). Visi, misi, 3 nilai, dan hingga 3 kantor masing-masing dengan `name`, `address`, `mapUrl?`, plus `mapEmbedUrl?` sebagai fallback global.
+
+### ServicesContent / PortfolioContent
+Singleton (`id = 1`). Di-upsert, bukan insert.
+
+### ClientLogo
+Bukan singleton — bisa unlimited rows. Kolom: `id uuid`, `logoUrl varchar(512)`, `altText varchar(256)?`, `createdAt timestamp`. Di-manage via `/admin/pages/portfolio`.
 
 ---
 
 ## Auth Architecture (Clerk)
 
 ```
-User access /admin/*
+Semua request → proxy.ts → clerkMiddleware() (selalu berjalan)
   │
-  ├── middleware.ts
-  │     ├── Clerk auth() → valid session?
-  │     │     └── No → redirect /sign-in
-  │     ├── auth().sessionClaims.metadata.role
-  │     │     └── Not ADMIN/SUPER_ADMIN → redirect /
-  │     └── db.query.userProfile (isActive)
-  │           └── isActive = false → redirect /
+  ├── Route publik (/jobs, /, /jobs/[id], /services, /portfolio, /about, dll.)
+  │     └── handleI18nRouting() → Page renders
+  │           auth() tersedia tapi nullable — digunakan untuk:
+  │             • Navbar: tampil "Dashboard" / "Sign out" atau "Masuk/Daftar"
+  │             • /jobs/[id]: ApplyForm vs "Masuk untuk Melamar"
+  │             • /jobs/[id]: cek apakah sudah apply
   │
-  └── Page renders with guaranteed valid + active admin session
+  └── Protected route (/admin/*, /dashboard/*)
+        ├── auth.protect() → No session? → redirect /sign-in
+        ├── sessionClaims.metadata.role + isActive dari JWT
+        │     ├── isActive = false → redirect /
+        │     ├── /admin/* + bukan ADMIN/SUPER_ADMIN → redirect /
+        │     └── /dashboard/* + isAdminRole → redirect /admin
+        └── Page renders (session dijamin valid + aktif)
 
-Role assignment flow (admin invitation):
-  Super Admin → /admin/users → inviteAdmin() Server Action
-    → Clerk Invitation API (POST /invitations)
-    → Clerk sends invitation email
-    → New admin accepts → creates Clerk account
-    → Clerk fires webhook user.created
-    → /api/webhooks/clerk → set publicMetadata.role = "ADMIN"
-    → Create UserProfile row in DB
+Role assignment (admin invitation):
+  Super Admin → /admin/users → inviteAdmin() [belum selesai]
+    → Clerk Invitation API → Clerk sends invitation email
+    → New admin accepts → Clerk fires webhook user.created
+    → /api/webhooks/clerk → set publicMetadata.role = "ADMIN" + create UserProfile
 ```
+
+**Penting:** ClerkProvider ada di `src/app/[locale]/layout.tsx` (root layout), bukan di `(auth)/layout.tsx`. Ini diperlukan agar `SignOutButton` dan komponen Clerk lain bisa digunakan di semua halaman termasuk halaman marketing.
 
 ---
 
@@ -210,19 +235,36 @@ Role assignment flow (admin invitation):
 ```
 Page (Server Component) → db.query.tableName.findMany() → render
 ```
-No useEffect, no client-side fetch for page data.
+Tidak ada `useEffect`, tidak ada client-side fetch untuk page data.
 
 **Mutations (write):**
 ```
-Form → Server Action → Zod.parse() → db.insert/update → revalidatePath()
-                    └── Error → return { success: false, error }
+Form/Button → Server Action → Zod.parse() → db.insert/update → revalidatePath()
+                           └── Auth check: auth() → userId required
+                           └── Role check: publicMetadata.role untuk admin actions
 ```
 
 **Filter/search/pagination:**
 ```
 URL search params → searchParams prop (Server Component) → Drizzle where clause
 ```
-State lives in URL — shareable, back-button works, no useState needed.
+State hidup di URL — shareable, back-button berfungsi, tidak perlu `useState`.
 
-**Optimistic UI:**
-Used only for status update in admin applicant table (`useOptimistic`).
+**Notifikasi in-app (applicantSeen):**
+```
+Admin updateApplicationStatus → set applicantSeen = false → kirim email ke pelamar
+  ↓
+DashboardLayout (server) → query count applicantSeen = false → badge di sidebar
+  ↓
+DashboardPage loads → MarkApplicationsSeen (client component) → useEffect fires
+  → markApplicationsSeen() action → set applicantSeen = true
+  ↓
+Next navigation → layout re-render → badge hilang
+```
+
+**Email notification flow:**
+```
+applyToJob → getAdminEmails (Clerk API) → resend.emails.send (ke semua admin)
+updateApplicationStatus → getUser (Clerk API) → resend.emails.send (ke pelamar)
+```
+Kedua email dibungkus try-catch — kegagalan kirim email tidak menggagalkan operasi utama.

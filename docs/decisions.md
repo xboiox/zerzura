@@ -4,6 +4,32 @@ Format: **Keputusan → Alasan → Konsekuensi**
 
 ---
 
+## ADR-013: clerkMiddleware berjalan di semua route (termasuk publik)
+
+**Status:** Accepted
+**Konteks:** Implementasi awal hanya menjalankan `clerkMiddleware()` untuk protected routes dan auth pages, dengan harapan menghemat overhead. Ketika `auth()` dipanggil di Server Component pada halaman publik (marketing layout, job detail page), Clerk melempar error: `"auth() was called but Clerk can't detect usage of clerkMiddleware()"`.
+**Keputusan:** `clerkMiddleware()` sekarang selalu berjalan untuk semua route. Logic guard (role check, isActive, redirect) tetap hanya dieksekusi untuk protected routes — overhead tetap minimal.
+**Konsekuensi:**
+- ✅ `auth()` dapat dipanggil dari halaman mana pun (publik maupun protected) tanpa error
+- ✅ Navbar bisa menampilkan "Dashboard" atau "Masuk/Daftar" berdasarkan status login
+- ✅ Tombol "Masuk untuk Melamar" vs "Lamar Sekarang" di detail job bisa dibedakan server-side
+- ⚠️ Sedikit tambahan latency (~1–5ms) per request karena Clerk middleware diinisialisasi lebih sering — acceptable
+
+---
+
+## ADR-014: Filter dan pagination halaman /jobs berbasis URL (link + form GET)
+
+**Status:** Accepted
+**Konteks:** Perlu memilih antara client-side state (useState + router.push) atau server-side (URL search params via links dan form GET) untuk filter tipe kerja dan search keyword.
+**Keputusan:** Filter tipe kerja menggunakan link-based URL (setiap tipe = satu `<Link>` yang memperbarui `?type=`). Search keyword menggunakan form GET dengan submit button. Tidak ada client-side JavaScript untuk filtering.
+**Konsekuensi:**
+- ✅ Halaman sepenuhnya Server Component — tidak ada `'use client'`, tidak ada hydration overhead
+- ✅ URL shareable — user bisa share hasil filter ke orang lain
+- ✅ Back button browser bekerja natural
+- ⚠️ Search membutuhkan klik tombol eksplisit (bukan real-time debounce) — acceptable untuk Phase 3
+
+---
+
 ## ADR-001: Clerk menggantikan NextAuth.js v5
 
 **Status:** Accepted
@@ -135,6 +161,121 @@ Format: **Keputusan → Alasan → Konsekuensi**
 - ✅ Kompatibel dengan Tailwind v4 yang sudah ada di boilerplate
 - ✅ Tidak ada dependency runtime tambahan yang tidak diperlukan
 - ⚠️ Perlu install manual tiap component yang dibutuhkan (`npx shadcn@latest add`)
+
+---
+
+## ADR-012: Next.js 16 menggunakan `proxy.ts` sebagai middleware entry point
+
+**Status:** Accepted
+**Konteks:** Next.js 16 mengubah konvensi middleware. File `middleware.ts` deprecated; Next.js 16 menggunakan `proxy.ts` sebagai primary middleware file. Memiliki keduanya secara bersamaan menyebabkan error: `"Both middleware file ./src/middleware.ts and proxy file ./src/proxy.ts are detected."`.
+**Keputusan:** Hapus `src/middleware.ts`. Semua logic middleware (Clerk, i18n, Arcjet, config export) berada di `src/proxy.ts`.
+**Konsekuensi:**
+- ✅ Sesuai konvensi Next.js 16 — tidak ada konflik file
+- ✅ Config matcher (route patterns) dan logic middleware dalam satu file
+- ⚠️ Berbeda dari dokumentasi Next.js lama dan boilerplate yang belum diupdate; jangan membuat `src/middleware.ts` baru
+- ⚠️ `config` export **harus** ada di `src/proxy.ts` — tidak bisa dipindah ke file lain
+
+---
+
+## ADR-015: applicantSeen boolean untuk notifikasi in-app pelamar
+
+**Status:** Accepted
+**Konteks:** Pelamar perlu tahu kapan status lamarannya berubah tanpa harus selalu buka dashboard. Butuh mekanisme "unread notification" tanpa infrastruktur tambahan (WebSocket, polling, push notification).
+**Keputusan:** Tambahkan kolom `applicantSeen: boolean DEFAULT true` ke `applicationTable`. Saat admin update status, set ke `false`. Saat pelamar buka dashboard, `MarkApplicationsSeen` client component fire server action untuk reset semua ke `true`. Badge di sidebar menampilkan count di mana `applicantSeen = false`.
+**Konsekuensi:**
+- ✅ Tidak butuh tabel terpisah atau infrastruktur real-time
+- ✅ Badge akurat — hanya merah jika benar-benar ada perubahan yang belum dilihat
+- ✅ Badge hilang otomatis setelah user mengunjungi dashboard (next navigation)
+- ⚠️ "Seen" tracking berlaku per-device hanya jika user membuka dashboard — bukan saat hanya melihat badge
+- ⚠️ Jika `markApplicationsSeen` gagal (network error), badge tetap merah sampai retry berhasil
+
+---
+
+## ADR-016: ClerkProvider di root [locale]/layout.tsx
+
+**Status:** Accepted
+**Konteks:** `ClerkProvider` awalnya ada di `(auth)/layout.tsx`. Ketika `SignOutButton` ditambahkan ke navbar marketing (halaman publik), Clerk melempar error: `"SignOutButton can only be used within the <ClerkProvider /> component."` karena halaman marketing tidak ada di dalam `(auth)` route group.
+**Keputusan:** Pindahkan `ClerkProvider` ke `src/app/[locale]/layout.tsx` (root locale layout) sehingga semua halaman — baik public maupun protected — punya Clerk context.
+**Konsekuensi:**
+- ✅ `SignOutButton` dan semua Clerk client components berfungsi di semua halaman
+- ✅ Navbar marketing bisa tampilkan tombol Sign Out untuk user yang sedang login
+- ⚠️ Sedikit overhead Clerk initialization di semua halaman publik — acceptable, minimal
+
+---
+
+## ADR-017: UploadThing token format untuk v7
+
+**Status:** Accepted
+**Konteks:** Upload CV gagal dengan error "Invalid token". UploadThing v7 mengubah format token: dari string API key biasa menjadi base64-encoded JSON `{ apiKey, appId, regions: NonEmptyArray<string> }`. Field `regions` wajib ada dan tidak boleh array kosong.
+**Keputusan:** Buat fungsi `resolveToken()` di `api/uploadthing/route.ts` yang: (1) gunakan `UPLOADTHING_TOKEN` jika ada (sudah dalam format baru), atau (2) konstruksi token dari `UPLOADTHING_SECRET` + `UPLOADTHING_APP_ID` + default region `['fra1']`.
+**Konsekuensi:**
+- ✅ Backward compatible — deployment lama dengan `UPLOADTHING_SECRET/APP_ID` tetap berfungsi
+- ✅ Deployment baru cukup set satu `UPLOADTHING_TOKEN`
+- ⚠️ Region `fra1` di-hardcode sebagai default; perlu diubah jika deployment di region berbeda
+
+---
+
+## ADR-018: Warna merah sebagai primary brand color
+
+**Status:** Accepted
+**Konteks:** Warna default boilerplate adalah hitam/near-black. Logo PTNIP menggunakan merah.
+**Keputusan:** Ubah `--primary` di `global.css` ke `oklch(0.45 0.207 25)` (setara red-700). Semua komponen shadcn/ui yang menggunakan `--primary` (Button, focus ring) otomatis ikut berubah tanpa modifikasi per-komponen.
+**Konsekuensi:**
+- ✅ Konsistensi brand menyeluruh dengan satu perubahan CSS variable
+- ✅ Tidak ada perubahan per-komponen — mudah di-revert atau diganti warna lain
+- ⚠️ Warna oklch perlu kalibrasi jika target browser lama tidak mendukung oklch (semua browser modern aman)
+
+---
+
+## ADR-019: Familjen Grotesk sebagai font dasar
+
+**Status:** Accepted
+**Konteks:** Boilerplate menggunakan font system-ui default. PTNIP memerlukan identitas tipografi yang lebih kuat.
+**Keputusan:** Gunakan `next/font/google` untuk load Familjen Grotesk. Font di-host otomatis oleh Next.js (zero external network request di browser), variable CSS `--font-sans` di-inject via className di `<html>`.
+**Konsekuensi:**
+- ✅ Zero layout shift — Next.js preload dan inline font declaration di `<head>`
+- ✅ GDPR-friendly — tidak ada request ke Google Fonts dari browser user
+- ✅ Cukup satu baris perubahan di root layout untuk mengganti font seluruh aplikasi
+- ⚠️ Menambah ~40–80KB ke initial bundle (font file), dapat dimitigasi dengan `display: swap`
+
+---
+
+## ADR-020: ClientLogo sebagai tabel terpisah (bukan array di PortfolioContent)
+
+**Status:** Accepted
+**Konteks:** Logo klien/mitra awalnya hardcoded di `src/data/clientLogos.ts`. Saat dijadikan admin-editable, ada dua opsi: (A) simpan sebagai JSON array di kolom PortfolioContent, (B) tabel terpisah `client_logo`.
+**Keputusan:** Opsi B — tabel terpisah dengan `id`, `logoUrl`, `altText`, `createdAt`. Insert/delete per-baris.
+**Konsekuensi:**
+- ✅ Insert/delete individual logo tanpa serialize/deserialize JSON
+- ✅ `createdAt` memungkinkan pengurutan berdasarkan waktu ditambahkan
+- ✅ Mudah diperluas (tambah kolom `order`, `isActive`, dll.) tanpa migrasi besar
+- ⚠️ Perlu migration + tabel baru vs hanya ubah kolom existing
+
+---
+
+## ADR-021: db.select() untuk clientLogoTable (bukan db.query relational API)
+
+**Status:** Accepted
+**Konteks:** `db.query.<table>.findMany()` (Drizzle relational query API) bergantung pada schema registry yang di-cache di `globalThis.cachedDrizzle`. Tabel baru yang ditambahkan setelah server dev pertama kali berjalan tidak ter-register dalam instance yang cached, menyebabkan `db.query.clientLogoTable` menjadi `undefined`.
+**Keputusan:** Gunakan `db.select().from(clientLogoTable).orderBy(...)` (standard query builder) yang membaca langsung dari referensi tabel tanpa registry.
+**Konsekuensi:**
+- ✅ Tidak bergantung pada cache — berfungsi tanpa restart dev server
+- ✅ Lebih eksplisit dan portable (tidak bergantung pada pola relational Drizzle)
+- ⚠️ Tidak bisa gunakan `with: { relation }` inline — perlu join manual jika nanti ada relasi. Acceptable karena `clientLogoTable` tidak punya relasi.
+
+---
+
+## ADR-022: Infinite scroll marquee dengan CSS animation + pre-duplikasi array
+
+**Status:** Accepted
+**Konteks:** Untuk menampilkan logo klien di homepage dengan efek scroll otomatis. Opsi: (A) library carousel (embla, swiper), (B) pure CSS `@keyframes` + JavaScript, (C) pure CSS + duplikasi DOM.
+**Keputusan:** Opsi C — duplikasi array logo di server, animasi `translateX(-50%)` dari 0% ke -50% (sehingga set pertama persis berakhir di posisi awal set kedua = seamless loop). Durasi adaptif berdasarkan jumlah logo (`max(15s, count × 3s)`).
+**Konsekuensi:**
+- ✅ Zero JavaScript runtime — Server Component, tidak ada `'use client'`
+- ✅ Tidak ada dependency tambahan
+- ✅ Pause on hover via `group-hover:[animation-play-state:paused]` (pure CSS)
+- ⚠️ DOM nodes dua kali lipat — acceptable karena logo adalah `<img>` kecil
+- ⚠️ Jika hanya 1–2 logo, duplikasi mungkin tidak cukup untuk loop visual yang baik — admin perlu isi minimal 4–5 logo
 
 ---
 

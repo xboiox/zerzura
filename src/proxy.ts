@@ -8,65 +8,91 @@ import { routing } from './libs/I18nRouting';
 
 const handleI18nRouting = createMiddleware(routing);
 
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/:locale/dashboard(.*)']);
-
-const isAuthPage = createRouteMatcher([
-  '/sign-in(.*)',
-  '/:locale/sign-in(.*)',
-  '/sign-up(.*)',
-  '/:locale/sign-up(.*)',
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/:locale/dashboard(.*)',
+  '/admin(.*)',
+  '/:locale/admin(.*)',
 ]);
 
-// Improve security with Arcjet
+const isAdminRoute = createRouteMatcher(['/admin(.*)', '/:locale/admin(.*)']);
+
+const isSuperAdminRoute = createRouteMatcher([
+  '/admin/users(.*)',
+  '/:locale/admin/users(.*)',
+  '/admin/company(.*)',
+  '/:locale/admin/company(.*)',
+]);
+
+const isDashboardRoute = createRouteMatcher(['/dashboard(.*)', '/:locale/dashboard(.*)']);
+
+type UserMetadata = {
+  role?: 'ADMIN' | 'SUPER_ADMIN' | 'USER';
+  isActive?: boolean;
+};
+
 const aj = arcjet.withRule(
   detectBot({
     mode: 'LIVE',
-    // Block all bots except the following
-    allow: [
-      // See https://docs.arcjet.com/bot-protection/identifying-bots
-      'CATEGORY:SEARCH_ENGINE', // Allow search engines
-      'CATEGORY:PREVIEW', // Allow preview links to show OG images
-      'CATEGORY:MONITOR', // Allow uptime monitoring services
-    ],
+    allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW', 'CATEGORY:MONITOR'],
   }),
 );
 
+function getLocalePrefix(req: NextRequest): string {
+  const firstSegment = req.nextUrl.pathname.split('/')[1] ?? '';
+  const nonDefaultLocales = routing.locales.filter((l) => l !== routing.defaultLocale);
+  return nonDefaultLocales.includes(firstSegment) ? `/${firstSegment}` : '';
+}
+
+export const config = {
+  // Run on all page routes (excluding assets, _next, etc.) AND the upload API route
+  matcher: ['/((?!_next|_vercel|monitoring|api|.*\\..*).*)', '/api/uploadthing'],
+};
+
 export default async function proxy(request: NextRequest, event: NextFetchEvent) {
-  // Verify the request with Arcjet
-  // Use `process.env` instead of Env to reduce bundle size in middleware
   if (process.env.ARCJET_KEY) {
     const decision = await aj.protect(request);
-
     if (decision.isDenied()) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
   }
 
-  // Clerk keyless mode doesn't work with i18n, this is why we need to run the middleware conditionally
-  if (isAuthPage(request) || isProtectedRoute(request)) {
-    // Match Clerk's documented middleware composition pattern, `return await` is not necessary.
-    // oxlint-disable-next-line typescript/return-await
-    return clerkMiddleware(async (auth, req) => {
-      if (isProtectedRoute(req)) {
-        const locale = req.nextUrl.pathname.match(/(\/.*)\/dashboard/u)?.at(1) ?? '';
+  // Always run clerkMiddleware so auth() is available on all pages (including public ones)
+  return await clerkMiddleware(async (auth, req) => {
+    // API routes only need Clerk auth context — skip i18n routing
+    if (req.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
 
-        const signInUrl = new URL(`${locale}/sign-in`, req.url);
+    if (isProtectedRoute(req)) {
+      const localePrefix = getLocalePrefix(req);
+      const signInUrl = new URL(`${localePrefix}/sign-in`, req.url);
 
-        await auth.protect({
-          unauthenticatedUrl: signInUrl.toString(),
-        });
+      await auth.protect({ unauthenticatedUrl: signInUrl.toString() });
+
+      const { sessionClaims } = await auth();
+      const metadata = (sessionClaims?.metadata ?? {}) as UserMetadata;
+      const isActive = metadata.isActive ?? true;
+      const { role } = metadata;
+      const isAdminRole = role === 'ADMIN' || role === 'SUPER_ADMIN';
+
+      if (!isActive) {
+        return NextResponse.redirect(new URL(`${localePrefix}/`, req.url));
       }
 
-      return handleI18nRouting(req);
-    })(request, event);
-  }
+      if (isAdminRoute(req) && !isAdminRole) {
+        return NextResponse.redirect(new URL(`${localePrefix}/`, req.url));
+      }
 
-  return handleI18nRouting(request);
+      if (isSuperAdminRoute(req) && role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL(`${localePrefix}/admin`, req.url));
+      }
+
+      if (isDashboardRoute(req) && isAdminRole) {
+        return NextResponse.redirect(new URL(`${localePrefix}/admin`, req.url));
+      }
+    }
+
+    return handleI18nRouting(req);
+  })(request, event);
 }
-
-export const config = {
-  // Match all pathnames except for
-  // - … if they start with `/_next`, `/_vercel` or `monitoring`
-  // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: '/((?!_next|_vercel|monitoring|api|.*\\..*).*)',
-};

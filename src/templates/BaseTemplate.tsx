@@ -37,7 +37,7 @@ export const BaseTemplate = (props: {
             author: () => (
               <a
                 href="https://nextjs-boilerplate.com"
-                className="text-blue-700 hover:border-b-2 hover:border-blue-700"
+                className="text-red-700 hover:border-b-2 hover:border-red-700"
               >
                 Next.js Boilerplate
               </a>

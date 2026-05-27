@@ -1,0 +1,1 @@
+ALTER TABLE "application" ADD COLUMN "applicant_seen" boolean DEFAULT true NOT NULL;
