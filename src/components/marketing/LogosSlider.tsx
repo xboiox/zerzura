@@ -15,15 +15,15 @@ type LogosSliderProps = {
 
 export function LogosSlider(props: LogosSliderProps) {
   return (
-    <div className="relative h-24 w-full overflow-hidden">
+    <div className="relative h-44 w-full overflow-hidden">
       <InfiniteSlider className="flex h-full w-full items-center" duration={30} gap={48}>
         {props.logos.map((logo) => (
-          <div key={logo.id} className="flex w-36 items-center justify-center">
+          <div key={logo.id} className="flex w-56 items-center justify-center">
             {/* biome-ignore lint/performance/noImgElement: no next/image needed for external logos in marquee */}
             <img
               src={logo.logoUrl}
               alt={logo.altText ?? ''}
-              className="h-10 w-auto max-w-[144px] object-contain"
+              className="h-40 w-auto max-w-[224px] object-contain"
               loading="lazy"
             />
           </div>
