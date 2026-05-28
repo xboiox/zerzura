@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { JobCard } from '@/components/jobs/JobCard';
 import { GlobeHeroSection } from '@/components/marketing/GlobeHeroSection';
-import { LogoMarquee } from '@/components/marketing/LogoMarquee';
+import { LogosSlider } from '@/components/marketing/LogosSlider';
 import { db } from '@/libs/DB';
 import { Link } from '@/libs/I18nNavigation';
 import { clientLogoTable, jobTable } from '@/models/Schema';
@@ -68,7 +68,7 @@ export default async function IndexPage(props: HomePageProps) {
               {t('clients_title')}
             </h2>
           </div>
-          <LogoMarquee logos={clientLogos} />
+          <LogosSlider logos={clientLogos} />
         </section>
       )}
 

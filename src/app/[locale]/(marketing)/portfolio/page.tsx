@@ -1,7 +1,7 @@
 import { asc } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { LogoMarquee } from '@/components/marketing/LogoMarquee';
+import { LogosSlider } from '@/components/marketing/LogosSlider';
 import { buttonVariants } from '@/components/ui/button';
 import { db } from '@/libs/DB';
 import { Link } from '@/libs/I18nNavigation';
@@ -94,7 +94,7 @@ export default async function PortfolioPage(props: PortfolioPageProps) {
               {t('clients_title')}
             </h2>
           </div>
-          <LogoMarquee logos={clientLogos} />
+          <LogosSlider logos={clientLogos} />
         </section>
       )}
 
