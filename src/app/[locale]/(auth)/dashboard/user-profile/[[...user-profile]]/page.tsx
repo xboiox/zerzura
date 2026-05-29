@@ -43,33 +43,6 @@ function buildProfileFormData(dbProfile: DbProfile) {
   };
 }
 
-type UserHeaderProps = { displayName: string; displayAvatar: string | null; email: string };
-
-function UserHeader(props: UserHeaderProps) {
-  return (
-    <div className="mb-6 flex items-center gap-4">
-      <div className="size-14 overflow-hidden rounded-full bg-gray-100">
-        {props.displayAvatar ? (
-          // biome-ignore lint/performance/noImgElement: user avatar, external URL
-          <img
-            src={props.displayAvatar}
-            alt={props.displayName}
-            className="size-full object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-xl font-semibold text-gray-400">
-            {props.displayName[0]?.toUpperCase() ?? '?'}
-          </div>
-        )}
-      </div>
-      <div>
-        <p className="text-base font-semibold text-gray-900">{props.displayName}</p>
-        <p className="text-sm text-gray-500">{props.email}</p>
-      </div>
-    </div>
-  );
-}
-
 export default async function UserProfilePage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
@@ -87,12 +60,7 @@ export default async function UserProfilePage(props: { params: Promise<{ locale:
     db.query.workExperienceTable.findMany({ where: eq(workExperienceTable.clerkId, clerkUser.id) }),
   ]);
 
-  const clerkFullName =
-    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.id;
-  const displayName = dbProfile?.fullName ?? clerkFullName;
-  const displayAvatar = dbProfile?.avatarUrl ?? clerkUser.imageUrl;
-  const email = clerkUser.emailAddresses[0]?.emailAddress ?? '—';
-
+  const email = clerkUser.emailAddresses[0]?.emailAddress ?? '';
   const profileFormData = buildProfileFormData(dbProfile);
 
   return (
@@ -104,13 +72,11 @@ export default async function UserProfilePage(props: { params: Promise<{ locale:
 
       {/* Personal info */}
       <section className="rounded-lg border border-gray-200 bg-white p-6">
-        <UserHeader displayName={displayName} displayAvatar={displayAvatar} email={email} />
-
         <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
           {t('personal_info_title')}
         </h2>
 
-        <ProfileForm {...profileFormData} />
+        <ProfileForm {...profileFormData} email={email} />
       </section>
 
       {/* Education */}
@@ -130,13 +96,21 @@ export default async function UserProfilePage(props: { params: Promise<{ locale:
       </section>
 
       {/* Clerk account management */}
-      <section>
+      <section className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
           {t('account_title')}
         </h2>
-        <div className="lg:-ml-4">
-          <UserProfile path={getI18nPath('/dashboard/user-profile', locale)} />
-        </div>
+        <UserProfile
+          path={getI18nPath('/dashboard/user-profile', locale)}
+          appearance={{
+            elements: {
+              rootBox: 'w-full',
+              card: 'shadow-none border-0 rounded-none p-0 w-full',
+              navbar: 'border-r border-gray-200 bg-transparent',
+              scrollBox: 'p-0',
+            },
+          }}
+        />
       </section>
     </div>
   );

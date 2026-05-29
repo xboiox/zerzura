@@ -336,6 +336,8 @@
     "gender_placeholder": "Pilih jenis kelamin",
     "gender_male": "Laki-laki",
     "gender_female": "Perempuan",
+    "email_label": "Email",
+    "email_help": "Email diambil dari akun Clerk dan tidak dapat diubah di sini.",
     "phone_label": "Nomor Telepon",
     "phone_placeholder": "cth. 08123456789",
     "city_label": "Kota",

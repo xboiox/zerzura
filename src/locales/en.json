@@ -336,6 +336,8 @@
     "gender_placeholder": "Select gender",
     "gender_male": "Male",
     "gender_female": "Female",
+    "email_label": "Email",
+    "email_help": "Email is managed by your Clerk account and cannot be changed here.",
     "phone_label": "Phone Number",
     "phone_placeholder": "e.g. +62 812 3456 789",
     "city_label": "City",

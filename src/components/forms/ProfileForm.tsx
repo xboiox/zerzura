@@ -10,6 +10,7 @@ type ProfileFormProps = {
   fullName: string | null;
   avatarUrl: string | null;
   gender: 'MALE' | 'FEMALE' | null;
+  email: string;
   phone: string | null;
   city: string | null;
   skills: string[];
@@ -136,6 +137,21 @@ export function ProfileForm(props: ProfileFormProps) {
             <option value="FEMALE">{t('gender_female')}</option>
           </select>
         </div>
+      </div>
+
+      {/* Email (dari Clerk, read-only) */}
+      <div>
+        <label htmlFor="email" className={labelClass}>
+          {t('email_label')}
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={props.email}
+          readOnly
+          className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-gray-400">{t('email_help')}</p>
       </div>
 
       {/* Telepon & Kota */}
