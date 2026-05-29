@@ -57,6 +57,13 @@
       "when": 1779853638285,
       "tag": "0007_cooing_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780051704289,
+      "tag": "0008_lucky_wither",
+      "breakpoints": true
     }
   ]
 }

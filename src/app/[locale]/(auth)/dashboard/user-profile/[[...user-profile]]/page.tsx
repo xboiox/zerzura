@@ -1,11 +1,74 @@
 import { UserProfile } from '@clerk/nextjs';
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+import type { InferSelectModel } from 'drizzle-orm';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { EducationSection } from '@/components/dashboard/EducationSection';
+import { WorkExperienceSection } from '@/components/dashboard/WorkExperienceSection';
 import { ProfileForm } from '@/components/forms/ProfileForm';
 import { db } from '@/libs/DB';
-import { userProfileTable } from '@/models/Schema';
+import { educationTable, userProfileTable, workExperienceTable } from '@/models/Schema';
 import { getI18nPath } from '@/utils/Helpers';
+
+type DbProfile = InferSelectModel<typeof userProfileTable> | undefined;
+
+const EMPTY_PROFILE = {
+  fullName: null as string | null,
+  avatarUrl: null as string | null,
+  gender: null as 'MALE' | 'FEMALE' | null,
+  phone: null as string | null,
+  city: null as string | null,
+  skills: [] as string[],
+  facebookUrl: null as string | null,
+  instagramUrl: null as string | null,
+  linkedinUrl: null as string | null,
+  githubUrl: null as string | null,
+};
+
+function buildProfileFormData(dbProfile: DbProfile) {
+  if (!dbProfile) {
+    return EMPTY_PROFILE;
+  }
+  return {
+    fullName: dbProfile.fullName,
+    avatarUrl: dbProfile.avatarUrl,
+    gender: dbProfile.gender,
+    phone: dbProfile.phone,
+    city: dbProfile.city,
+    skills: dbProfile.skills ?? [],
+    facebookUrl: dbProfile.facebookUrl,
+    instagramUrl: dbProfile.instagramUrl,
+    linkedinUrl: dbProfile.linkedinUrl,
+    githubUrl: dbProfile.githubUrl,
+  };
+}
+
+type UserHeaderProps = { displayName: string; displayAvatar: string | null; email: string };
+
+function UserHeader(props: UserHeaderProps) {
+  return (
+    <div className="mb-6 flex items-center gap-4">
+      <div className="size-14 overflow-hidden rounded-full bg-gray-100">
+        {props.displayAvatar ? (
+          // biome-ignore lint/performance/noImgElement: user avatar, external URL
+          <img
+            src={props.displayAvatar}
+            alt={props.displayName}
+            className="size-full object-cover"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center text-xl font-semibold text-gray-400">
+            {props.displayName[0]?.toUpperCase() ?? '?'}
+          </div>
+        )}
+      </div>
+      <div>
+        <p className="text-base font-semibold text-gray-900">{props.displayName}</p>
+        <p className="text-sm text-gray-500">{props.email}</p>
+      </div>
+    </div>
+  );
+}
 
 export default async function UserProfilePage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
@@ -13,26 +76,24 @@ export default async function UserProfilePage(props: { params: Promise<{ locale:
 
   const t = await getTranslations({ locale, namespace: 'UserProfilePage' });
 
-  const [clerkUser, dbProfile] = await Promise.all([
-    currentUser(),
-    (async () => {
-      const user = await currentUser();
-      if (!user) {
-        return null;
-      }
-      return await db.query.userProfileTable.findFirst({
-        where: eq(userProfileTable.clerkId, user.id),
-      });
-    })(),
-  ]);
-
+  const clerkUser = await currentUser();
   if (!clerkUser) {
     return null;
   }
 
-  const fullName =
+  const [dbProfile, educationEntries, workEntries] = await Promise.all([
+    db.query.userProfileTable.findFirst({ where: eq(userProfileTable.clerkId, clerkUser.id) }),
+    db.query.educationTable.findMany({ where: eq(educationTable.clerkId, clerkUser.id) }),
+    db.query.workExperienceTable.findMany({ where: eq(workExperienceTable.clerkId, clerkUser.id) }),
+  ]);
+
+  const clerkFullName =
     [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.id;
+  const displayName = dbProfile?.fullName ?? clerkFullName;
+  const displayAvatar = dbProfile?.avatarUrl ?? clerkUser.imageUrl;
   const email = clerkUser.emailAddresses[0]?.emailAddress ?? '—';
+
+  const profileFormData = buildProfileFormData(dbProfile);
 
   return (
     <div className="space-y-8">
@@ -43,33 +104,29 @@ export default async function UserProfilePage(props: { params: Promise<{ locale:
 
       {/* Personal info */}
       <section className="rounded-lg border border-gray-200 bg-white p-6">
-        {/* Clerk user header */}
-        <div className="mb-6 flex items-center gap-4">
-          {clerkUser.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={clerkUser.imageUrl}
-              alt={fullName}
-              width={56}
-              height={56}
-              className="size-14 rounded-full object-cover"
-            />
-          )}
-          <div>
-            <p className="text-base font-semibold text-gray-900">{fullName}</p>
-            <p className="text-sm text-gray-500">{email}</p>
-          </div>
-        </div>
+        <UserHeader displayName={displayName} displayAvatar={displayAvatar} email={email} />
 
         <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
           {t('personal_info_title')}
         </h2>
 
-        <ProfileForm
-          phone={dbProfile?.phone ?? null}
-          city={dbProfile?.city ?? null}
-          skills={dbProfile?.skills ?? []}
-        />
+        <ProfileForm {...profileFormData} />
+      </section>
+
+      {/* Education */}
+      <section className="rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
+          {t('education_section_title')}
+        </h2>
+        <EducationSection entries={educationEntries} />
+      </section>
+
+      {/* Work Experience */}
+      <section className="rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
+          {t('work_section_title')}
+        </h2>
+        <WorkExperienceSection entries={workEntries} />
       </section>
 
       {/* Clerk account management */}

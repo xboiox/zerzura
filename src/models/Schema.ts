@@ -12,6 +12,7 @@ import {
 
 export const jobTypeEnum = pgEnum('job_type', ['REMOTE', 'ONSITE', 'HYBRID']);
 export const jobStatusEnum = pgEnum('job_status', ['DRAFT', 'PUBLISHED', 'INACTIVE']);
+export const genderEnum = pgEnum('gender', ['MALE', 'FEMALE']);
 export const applicationStatusEnum = pgEnum('application_status', [
   'PENDING',
   'REVIEWED',
@@ -27,9 +28,16 @@ export const userProfileTable = pgTable('user_profile', {
   id: uuid('id').primaryKey().defaultRandom(),
   clerkId: varchar('clerk_id', { length: 256 }).notNull().unique(),
   isActive: boolean('is_active').notNull().default(true),
+  fullName: varchar('full_name', { length: 100 }),
+  avatarUrl: varchar('avatar_url', { length: 512 }),
+  gender: genderEnum('gender'),
   phone: varchar('phone', { length: 50 }),
   city: varchar('city', { length: 100 }),
   skills: text('skills').array(),
+  facebookUrl: varchar('facebook_url', { length: 512 }),
+  instagramUrl: varchar('instagram_url', { length: 512 }),
+  linkedinUrl: varchar('linkedin_url', { length: 512 }),
+  githubUrl: varchar('github_url', { length: 512 }),
   defaultCvUrl: varchar('default_cv_url', { length: 512 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -138,6 +146,30 @@ export const clientLogoTable = pgTable('client_logo', {
   id: uuid('id').primaryKey().defaultRandom(),
   logoUrl: varchar('logo_url', { length: 512 }).notNull(),
   altText: varchar('alt_text', { length: 256 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const educationTable = pgTable('education', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clerkId: varchar('clerk_id', { length: 256 }).notNull(),
+  institution: varchar('institution', { length: 200 }).notNull(),
+  major: varchar('major', { length: 200 }).notNull(),
+  graduationYear: integer('graduation_year').notNull(),
+  gpa: varchar('gpa', { length: 20 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const workExperienceTable = pgTable('work_experience', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clerkId: varchar('clerk_id', { length: 256 }).notNull(),
+  companyName: varchar('company_name', { length: 200 }).notNull(),
+  position: varchar('position', { length: 200 }).notNull(),
+  startMonth: integer('start_month').notNull(),
+  startYear: integer('start_year').notNull(),
+  endMonth: integer('end_month'),
+  endYear: integer('end_year'),
+  isCurrent: boolean('is_current').notNull().default(false),
+  description: text('description'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
